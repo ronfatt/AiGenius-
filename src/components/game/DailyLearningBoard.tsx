@@ -19,6 +19,9 @@ function skillTone(skill: DailyLearningTile["skillDomain"]) {
 export function DailyLearningBoard({ tiles }: { tiles: DailyLearningTile[] }) {
   const [completedIds, setCompletedIds] = useState<string[]>([]);
   const [selectedTile, setSelectedTile] = useState<DailyLearningTile | null>(null);
+  const requiredTiles = tiles.filter((tile) => tile.group === "required");
+  const bonusTiles = tiles.filter((tile) => tile.group === "bonus");
+  const requiredDone = requiredTiles.filter((tile) => completedIds.includes(tile.id)).length;
 
   function completeTile(tile: DailyLearningTile) {
     setSelectedTile(tile);
@@ -36,16 +39,16 @@ export function DailyLearningBoard({ tiles }: { tiles: DailyLearningTile[] }) {
           </p>
           <h2 className="mt-3 text-2xl font-black">Today&apos;s learning tiles</h2>
           <p className="mt-2 text-sm font-bold leading-6 text-[#102A54]/60">
-            Random daily English practice. Complete tiles to earn rewards and grow your pet.
+            Finish 3 required tiles. Bonus tiles are optional.
           </p>
         </div>
         <span className="shrink-0 rounded-2xl border-2 border-[#102A54] bg-[#7BE0C3] px-3 py-2 text-xs font-black shadow-[3px_3px_0_#102A54]">
-          {completedIds.length}/{tiles.length}
+          {requiredDone}/3
         </span>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {tiles.map((tile) => {
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        {requiredTiles.map((tile) => {
           const completed = completedIds.includes(tile.id);
 
           return (
@@ -59,7 +62,7 @@ export function DailyLearningBoard({ tiles }: { tiles: DailyLearningTile[] }) {
             >
               <div className="flex items-start justify-between gap-2">
                 <span className="rounded-full border-2 border-[#102A54] bg-[#FFFEF8] px-3 py-1 text-[0.68rem] font-black uppercase">
-                  {tile.skillDomain}
+                  Required
                 </span>
                 <span className="rounded-full border-2 border-[#102A54] bg-[#FFFEF8] px-2 py-1 text-[0.68rem] font-black">
                   {completed ? "Done" : `${tile.durationMinutes}m`}
@@ -84,6 +87,41 @@ export function DailyLearningBoard({ tiles }: { tiles: DailyLearningTile[] }) {
           );
         })}
       </div>
+
+      <details className="mt-4 rounded-[1.5rem] border-2 border-[#102A54]/20 bg-[#FFF7E2] p-4">
+        <summary className="cursor-pointer text-sm font-black text-[#102A54]">
+          Bonus learning ({bonusTiles.length})
+        </summary>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {bonusTiles.map((tile) => {
+            const completed = completedIds.includes(tile.id);
+
+            return (
+              <button
+                type="button"
+                key={tile.id}
+                onClick={() => completeTile(tile)}
+                className={`rounded-[1.5rem] border-2 border-[#102A54] p-4 text-left shadow-[4px_4px_0_rgba(16,42,84,0.12)] transition hover:-translate-y-0.5 ${skillTone(
+                  tile.skillDomain,
+                )}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <span className="rounded-full border-2 border-[#102A54] bg-[#FFFEF8] px-3 py-1 text-[0.68rem] font-black uppercase">
+                    Bonus
+                  </span>
+                  <span className="rounded-full border-2 border-[#102A54] bg-[#FFFEF8] px-2 py-1 text-[0.68rem] font-black">
+                    {completed ? "Done" : `${tile.durationMinutes}m`}
+                  </span>
+                </div>
+                <h3 className="mt-4 text-lg font-black">{tile.title}</h3>
+                <p className="mt-2 text-sm font-bold leading-5 text-[#102A54]/70">
+                  {tile.prompt}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </details>
 
       {selectedTile ? (
         <div className="mt-4 rounded-[1.5rem] border-2 border-[#102A54] bg-[#FFF7E2] p-4">

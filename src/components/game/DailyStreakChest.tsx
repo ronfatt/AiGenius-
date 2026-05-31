@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 export function DailyStreakChest({
   streakDays,
@@ -9,8 +12,10 @@ export function DailyStreakChest({
   completedTiles: number;
   totalTiles: number;
 }) {
+  const [claimed, setClaimed] = useState(false);
   const progress = Math.min(100, Math.round((completedTiles / totalTiles) * 100));
   const rareTickets = streakDays >= 7 ? 1 : 0;
+  const canClaim = completedTiles >= Math.min(3, totalTiles);
 
   return (
     <section className="rounded-[2rem] border-4 border-[#102A54] bg-gradient-to-br from-[#FFD95A] to-[#FFB199] p-4 shadow-[6px_6px_0_rgba(16,42,84,0.14)] sm:p-5">
@@ -64,6 +69,19 @@ export function DailyStreakChest({
       >
         Go to Blind Boxes
       </Link>
+      <button
+        type="button"
+        disabled={!canClaim || claimed}
+        onClick={() => setClaimed(true)}
+        className="mt-3 w-full rounded-2xl border-2 border-[#102A54] bg-[#7BE0C3] px-5 py-4 text-sm font-black shadow-[4px_4px_0_#102A54] transition hover:-translate-y-0.5 disabled:bg-[#EEF2F5] disabled:text-[#102A54]/45"
+      >
+        {claimed ? "Chest Claimed" : canClaim ? "Claim Streak Chest" : "Complete 3 tiles first"}
+      </button>
+      {claimed ? (
+        <p className="mt-3 rounded-2xl border-2 border-[#102A54]/20 bg-[#FFFEF8] p-3 text-xs font-bold text-[#102A54]/70">
+          Claimed: +2 Normal Tickets, +1 Star Ticket{rareTickets ? ", +1 Rare Chance Ticket" : ""}.
+        </p>
+      ) : null}
     </section>
   );
 }

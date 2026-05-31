@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ProgressChart } from "@/components/charts/ProgressChart";
 import { DashboardShell } from "@/components/layout/DashboardShell";
+import { SpecialTicketPanel } from "@/components/teacher/SpecialTicketPanel";
 import { ActionButton, Card, ListRow, StatCard } from "@/components/ui";
 import {
   getClassTeacherName,
@@ -129,6 +130,8 @@ export default function TeacherDashboard() {
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+        <SpecialTicketPanel students={dashboard.students} />
+
         <Card>
           <h2 className="text-2xl font-black">Class XP leaderboard</h2>
           <div className="mt-4 grid gap-3">

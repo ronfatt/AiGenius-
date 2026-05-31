@@ -46,21 +46,21 @@ export function BlindBoxZone({ cards, coins }: { cards: PetCard[]; coins: number
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+    <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
       <section className="rounded-[2rem] border-4 border-[#102A54] bg-[#FFFEF8] p-5 shadow-[8px_8px_0_rgba(16,42,84,0.12)]">
         <p className="inline-flex rounded-full border-2 border-[#102A54] bg-[#FFD95A] px-3 py-1 text-xs font-black uppercase tracking-[0.16em]">
           Blind box zone
         </p>
-        <h1 className="mt-3 text-4xl font-black">Today&apos;s random boxes</h1>
+        <h1 className="mt-3 text-3xl font-black sm:text-4xl">Today&apos;s boxes</h1>
         <p className="mt-2 text-sm font-bold leading-6 text-[#102A54]/65">
-          Three boxes appear by luck. Normal is common, Star is uncommon, Rare is ultra rare.
+          Pick a box, use tickets or coins, and collect rewards.
         </p>
 
-        <div className="mt-5 rounded-2xl border-2 border-[#102A54] bg-[#FFF7E2] p-4">
+        <div className="mt-4 rounded-2xl border-2 border-[#102A54] bg-[#FFF7E2] p-4">
           <p className="text-xs font-black uppercase tracking-wide text-[#102A54]/60">
-            Balance and tickets
+            Wallet
           </p>
-          <p className="mt-1 text-3xl font-black">{coins} Star Coins</p>
+          <p className="mt-1 text-2xl font-black">{coins} Star Coins</p>
           <div className="mt-3 grid grid-cols-3 gap-2">
             <span className="rounded-2xl border-2 border-[#102A54] bg-[#FFFEF8] px-3 py-2 text-center text-xs font-black">
               {tickets.normal} Normal
@@ -74,15 +74,15 @@ export function BlindBoxZone({ cards, coins }: { cards: PetCard[]; coins: number
           </div>
         </div>
 
-        <div className="mt-5 flex items-center justify-between gap-3 rounded-2xl border-2 border-[#102A54] bg-[#FFF7E2] p-4">
-          <div>
-            <p className="text-xs font-black uppercase tracking-wide text-[#102A54]/60">
-              Appearance chance
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <details className="rounded-2xl border-2 border-[#102A54]/20 bg-[#FFF7E2] px-4 py-3">
+            <summary className="cursor-pointer text-xs font-black uppercase tracking-wide text-[#102A54]/70">
+              Box odds
+            </summary>
+            <p className="mt-2 text-xs font-bold leading-5 text-[#102A54]/65">
+              Normal appears often. Star appears sometimes. Rare is a lucky surprise and needs a Rare Chance Ticket.
             </p>
-            <p className="mt-1 text-sm font-bold text-[#102A54]/70">
-              Normal high · Star low · Rare about 1 / 10,000 per slot
-            </p>
-          </div>
+          </details>
           <button
             type="button"
             onClick={refreshShelf}
@@ -92,18 +92,18 @@ export function BlindBoxZone({ cards, coins }: { cards: PetCard[]; coins: number
           </button>
         </div>
 
-        <div className="mt-5 grid gap-3">
+        <div className="mt-4 grid gap-3">
           {availableBoxes.map((box, index) => (
             <button
               type="button"
               key={`${box.id}-${index}`}
               onClick={() => setSelectedBox(box)}
-              className={`rounded-[1.5rem] border-2 border-[#102A54] bg-gradient-to-br ${box.colorClass} p-4 text-left shadow-[4px_4px_0_rgba(16,42,84,0.14)] transition hover:-translate-y-0.5 ${
+              className={`rounded-[1.5rem] border-2 border-[#102A54] bg-gradient-to-br ${box.colorClass} p-3 text-left shadow-[4px_4px_0_rgba(16,42,84,0.14)] transition hover:-translate-y-0.5 sm:p-4 ${
                 selectedBox.id === box.id ? "ring-4 ring-[#102A54]/15" : ""
               }`}
             >
               <div className="flex items-start gap-3">
-                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 border-[#102A54] bg-[#FFFEF8] shadow-[3px_3px_0_rgba(16,42,84,0.16)]">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border-2 border-[#102A54] bg-[#FFFEF8] shadow-[3px_3px_0_rgba(16,42,84,0.16)] sm:h-20 sm:w-20">
                   <Image
                     src={box.imageUrl}
                     alt={box.name}
@@ -122,8 +122,8 @@ export function BlindBoxZone({ cards, coins }: { cards: PetCard[]; coins: number
                   <p className="mt-1 text-sm font-bold text-[#102A54]/65">
                     Slot {index + 1} · {box.appearanceRate}
                   </p>
-                  <p className="mt-3 text-sm font-bold leading-5 text-[#102A54]/70">
-                    {box.theme} · {box.rarityHint}
+                  <p className="mt-2 text-xs font-bold leading-5 text-[#102A54]/70 sm:text-sm">
+                    {box.theme}
                   </p>
                 </div>
               </div>
@@ -133,11 +133,11 @@ export function BlindBoxZone({ cards, coins }: { cards: PetCard[]; coins: number
       </section>
 
       <section className="rounded-[2rem] border-4 border-[#102A54] bg-gradient-to-br from-[#FFF7E2] to-[#7BE0C3]/40 p-5 shadow-[8px_8px_0_rgba(16,42,84,0.16)]">
-        <div className="rounded-[2rem] border-4 border-[#102A54] bg-[#FFFEF8] p-5 text-center shadow-[6px_6px_0_rgba(16,42,84,0.16)]">
+        <div className="rounded-[2rem] border-4 border-[#102A54] bg-[#FFFEF8] p-4 text-center shadow-[6px_6px_0_rgba(16,42,84,0.16)] sm:p-5">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FF6B57]">
             Selected box
           </p>
-          <div className={`relative mx-auto mt-5 h-48 w-48 overflow-hidden rounded-[2.5rem] border-4 border-[#102A54] bg-gradient-to-br ${selectedBox.colorClass} shadow-[8px_8px_0_rgba(16,42,84,0.18)]`}>
+          <div className={`relative mx-auto mt-4 h-44 w-44 overflow-hidden rounded-[2.5rem] border-4 border-[#102A54] bg-gradient-to-br ${selectedBox.colorClass} shadow-[8px_8px_0_rgba(16,42,84,0.18)] sm:h-48 sm:w-48`}>
             <Image
               src={selectedBox.imageUrl}
               alt={selectedBox.name}
@@ -147,7 +147,7 @@ export function BlindBoxZone({ cards, coins }: { cards: PetCard[]; coins: number
               priority
             />
           </div>
-          <h2 className="mt-5 text-3xl font-black">{selectedBox.name}</h2>
+          <h2 className="mt-4 text-3xl font-black">{selectedBox.name}</h2>
           <p className="mt-2 text-sm font-bold text-[#102A54]/65">
             {selectedBox.appearanceRate} · {selectedBox.rarityHint}
           </p>
@@ -210,11 +210,11 @@ export function BlindBoxZone({ cards, coins }: { cards: PetCard[]; coins: number
           </div>
         ) : null}
 
-        <div className="mt-5 rounded-[1.5rem] border-2 border-[#102A54] bg-[#FFFEF8] p-4">
+        <details className="mt-5 rounded-[1.5rem] border-2 border-[#102A54] bg-[#FFFEF8] p-4">
           <p className="text-xs font-black uppercase tracking-wide text-[#FF6B57]">
             Rare collection preview
           </p>
-          <h3 className="mt-2 text-2xl font-black">81 limited pet styles</h3>
+          <summary className="cursor-pointer text-2xl font-black">81 limited pet styles</summary>
           <p className="mt-2 text-sm font-bold leading-6 text-[#102A54]/65">
             9 pet bases x 9 decorations. Rare Box draws limited pet looks only.
           </p>
@@ -234,7 +234,7 @@ export function BlindBoxZone({ cards, coins }: { cards: PetCard[]; coins: number
               </div>
             ))}
           </div>
-        </div>
+        </details>
       </section>
     </div>
   );

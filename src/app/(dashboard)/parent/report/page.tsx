@@ -1,4 +1,3 @@
-import { PetCard } from "@/components/cards/PetCard";
 import { ProgressChart } from "@/components/charts/ProgressChart";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { Card, ListRow, StatCard } from "@/components/ui";
@@ -39,7 +38,17 @@ export default function ParentReportPage() {
             ))}
           </div>
         </Card>
-        <PetCard pet={dashboard.pet} />
+        <Card className="bg-gradient-to-br from-[#FFF7E2] to-[#7BE0C3]/35">
+          <h2 className="text-2xl font-black">Learning consistency</h2>
+          <div className="mt-5 grid gap-5">
+            <ProgressChart label="Attendance consistency" value={dashboard.child.attendanceRate} />
+            <ProgressChart label="Homework follow-through" value={dashboard.child.homeworkCompletionRate} />
+            <ProgressChart label="Weekly learning routine" value={Math.min(100, dashboard.child.streakDays * 12)} />
+          </div>
+          <p className="mt-4 rounded-2xl border-2 border-[#102A54]/20 bg-[#FFFEF8] p-4 text-sm font-bold leading-6 text-[#102A54]/70">
+            The child is building a regular learning habit. Game rewards are used as motivation, while teacher reports focus on English progress and consistency.
+          </p>
+        </Card>
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-3">
@@ -56,10 +65,14 @@ export default function ParentReportPage() {
           </div>
         </Card>
         <Card>
-          <h2 className="text-2xl font-black">Pet motivation</h2>
+          <h2 className="text-2xl font-black">Ability progress</h2>
           <p className="mt-3 text-sm font-bold leading-6 text-[#102A54]/70">
-            Pet growth reflects consistent English quest completion, attendance, and teacher rewards.
+            Current focus is closing the gap between actual English level and school grade expectations through short daily practice.
           </p>
+          <div className="mt-4 grid gap-3">
+            <ListRow title="Learning gap" meta={gap.recommendation} badge={gap.band} />
+            <ListRow title="Next focus" meta="Reading comprehension and grammar accuracy" badge="English" />
+          </div>
         </Card>
       </div>
     </DashboardShell>

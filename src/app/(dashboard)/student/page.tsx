@@ -4,6 +4,7 @@ import { DailyStreakChest } from "@/components/game/DailyStreakChest";
 import { PetCarePanel } from "@/components/game/PetCarePanel";
 import { PetAvatar } from "@/components/game/PetAvatar";
 import { StarCoinBadge } from "@/components/game/StarCoinBadge";
+import { TodayGoalPanel } from "@/components/game/TodayGoalPanel";
 import { XPBar } from "@/components/game/XPBar";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { Card } from "@/components/ui";
@@ -13,6 +14,8 @@ import { getPetStageIndex, getStudentDashboard } from "@/lib/dashboard-data";
 export default function StudentDashboard() {
   const dashboard = getStudentDashboard();
   const dailyTiles = getDailyLearningTiles();
+  const requiredTotal = dailyTiles.filter((tile) => tile.group === "required").length;
+  const requiredDone = 2;
 
   return (
     <DashboardShell title="Student Dashboard">
@@ -72,6 +75,8 @@ export default function StudentDashboard() {
         </div>
       </section>
 
+      <TodayGoalPanel requiredDone={requiredDone} requiredTotal={requiredTotal} />
+
       <div className="mt-3 sm:mt-4">
         <DailyLearningBoard tiles={dailyTiles} />
       </div>
@@ -79,8 +84,8 @@ export default function StudentDashboard() {
       <div className="mt-3 grid gap-3 sm:mt-4 sm:gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <DailyStreakChest
           streakDays={dashboard.student.streakDays}
-          completedTiles={2}
-          totalTiles={dailyTiles.length}
+          completedTiles={requiredDone}
+          totalTiles={requiredTotal}
         />
         <PetCarePanel pet={dashboard.pet} />
       </div>

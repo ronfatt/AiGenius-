@@ -11,6 +11,7 @@ export type DailyLearningTile = {
   xpReward: number;
   coinReward: number;
   prompt: string;
+  group: "required" | "bonus";
 };
 
 const dailyPool: DailyLearningTile[] = [
@@ -24,6 +25,7 @@ const dailyPool: DailyLearningTile[] = [
     xpReward: 18,
     coinReward: 4,
     prompt: "Read a short paragraph and choose the most important point.",
+    group: "required",
   },
   {
     id: "daily_grammar_01",
@@ -35,6 +37,7 @@ const dailyPool: DailyLearningTile[] = [
     xpReward: 22,
     coinReward: 5,
     prompt: "Choose the correct verb form in three short sentences.",
+    group: "required",
   },
   {
     id: "daily_vocab_01",
@@ -46,6 +49,7 @@ const dailyPool: DailyLearningTile[] = [
     xpReward: 16,
     coinReward: 4,
     prompt: "Match new words with simple meanings.",
+    group: "required",
   },
   {
     id: "daily_writing_01",
@@ -57,6 +61,7 @@ const dailyPool: DailyLearningTile[] = [
     xpReward: 28,
     coinReward: 7,
     prompt: "Write two clear sentences about your pet adventure.",
+    group: "bonus",
   },
   {
     id: "daily_speaking_01",
@@ -68,6 +73,7 @@ const dailyPool: DailyLearningTile[] = [
     xpReward: 15,
     coinReward: 3,
     prompt: "Practise one short answer aloud.",
+    group: "bonus",
   },
   {
     id: "daily_listening_01",
@@ -79,6 +85,7 @@ const dailyPool: DailyLearningTile[] = [
     xpReward: 20,
     coinReward: 5,
     prompt: "Listen to classroom-style instructions and choose the right action.",
+    group: "bonus",
   },
   {
     id: "daily_reading_02",
@@ -90,6 +97,7 @@ const dailyPool: DailyLearningTile[] = [
     xpReward: 35,
     coinReward: 9,
     prompt: "Use surrounding words to guess meaning.",
+    group: "bonus",
   },
   {
     id: "daily_grammar_02",
@@ -101,12 +109,16 @@ const dailyPool: DailyLearningTile[] = [
     xpReward: 32,
     coinReward: 8,
     prompt: "Find and correct one grammar mistake.",
+    group: "bonus",
   },
 ];
 
 export function getDailyLearningTiles(seed = new Date().getDate()) {
-  return Array.from({ length: 6 }, (_, index) => {
-    const poolIndex = (seed + index * 2) % dailyPool.length;
-    return dailyPool[poolIndex];
-  });
+  const required = dailyPool.filter((tile) => tile.group === "required");
+  const bonus = dailyPool.filter((tile) => tile.group === "bonus");
+
+  return [
+    ...Array.from({ length: 3 }, (_, index) => required[(seed + index) % required.length]),
+    ...Array.from({ length: 2 }, (_, index) => bonus[(seed + index * 2) % bonus.length]),
+  ];
 }

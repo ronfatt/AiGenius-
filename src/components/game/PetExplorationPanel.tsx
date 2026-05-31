@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  getPetCareState,
   getRandomExploration,
   tawauExplorationLocations,
   type ExplorationLocation,
@@ -47,6 +48,7 @@ export function PetExplorationPanel({ pet }: { pet: Pet }) {
   const [log, setLog] = useState<string[]>([
     "Choose a Tawau location and send your pet out for a gentle learning adventure.",
   ]);
+  const care = getPetCareState(pet);
 
   const selectedLocation = useMemo(
     () =>
@@ -54,8 +56,35 @@ export function PetExplorationPanel({ pet }: { pet: Pet }) {
       tawauExplorationLocations[0],
     [selectedId],
   );
+  const canExplore = care.energy >= 60;
+  const rewardBonus = Math.round((care.mood + care.bond) / 40);
+  const adjustedXp = selectedLocation.rewardXp + rewardBonus;
+  const adjustedCoins = selectedLocation.rewardCoins + Math.max(1, Math.round(rewardBonus / 2));
+
+  useEffect(() => {
+    if (!active || remainingMinutes <= 0) return;
+
+    const timer = window.setInterval(() => {
+      setRemainingMinutes((current) => {
+        const next = Math.max(0, current - 1);
+        if (next === 0) {
+          setLog((messages) => ["Your pet is back. Claim the return reward.", ...messages]);
+        }
+        return next;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [active, remainingMinutes]);
 
   function startExploration(location = selectedLocation) {
+    if (!canExplore) {
+      setLog([
+        `${pet.name} needs more Energy before exploring. Use Rest or complete lighter learning first.`,
+      ]);
+      return;
+    }
+
     setSelectedId(location.id);
     setActive(true);
     setCompleted(false);
@@ -77,7 +106,7 @@ export function PetExplorationPanel({ pet }: { pet: Pet }) {
     setRemainingMinutes(0);
     setLog((current) => [
       selectedLocation.discovery,
-      `${pet.name} brought back +${selectedLocation.rewardXp} XP, +${selectedLocation.rewardCoins} Star Coins, ${selectedLocation.careBonus}.`,
+      `${pet.name} brought back +${adjustedXp} XP, +${adjustedCoins} Star Coins, ${selectedLocation.careBonus}. Mood and Bond added a small bonus.`,
       ...current,
     ]);
   }
@@ -104,12 +133,12 @@ export function PetExplorationPanel({ pet }: { pet: Pet }) {
           </p>
           <h2 className="mt-2 text-2xl font-black">{selectedLocation.name}</h2>
           <p className="mt-2 text-sm font-bold text-[#102A54]/65">
-            {selectedLocation.durationMinutes} minutes · reward +{selectedLocation.rewardXp} XP · +{selectedLocation.rewardCoins} coins
+            {selectedLocation.durationMinutes} minutes · reward +{adjustedXp} XP · +{adjustedCoins} coins
           </p>
           <div className="mt-4 rounded-2xl border-2 border-[#102A54]/20 bg-[#FFF7E2] p-3">
             <div className="flex items-center justify-between text-xs font-black uppercase tracking-wide text-[#102A54]/60">
               <span>{active ? "Exploring timer" : "Timer"}</span>
-              <span>{active ? `${remainingMinutes} min left` : "Not started"}</span>
+              <span>{active ? `${remainingMinutes} sec left` : "Not started"}</span>
             </div>
             <div className="mt-2 h-3 overflow-hidden rounded-full border-2 border-[#102A54] bg-[#FFFEF8]">
               <div
@@ -141,13 +170,29 @@ export function PetExplorationPanel({ pet }: { pet: Pet }) {
           </button>
         </div>
 
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="rounded-2xl border-2 border-[#102A54] bg-[#FFFEF8] p-3 text-center">
+            <p className="text-lg font-black">{Math.round(care.mood)}%</p>
+            <p className="text-[0.65rem] font-black uppercase text-[#102A54]/60">Mood bonus</p>
+          </div>
+          <div className="rounded-2xl border-2 border-[#102A54] bg-[#FFFEF8] p-3 text-center">
+            <p className="text-lg font-black">{Math.round(care.energy)}%</p>
+            <p className="text-[0.65rem] font-black uppercase text-[#102A54]/60">Energy gate</p>
+          </div>
+          <div className="rounded-2xl border-2 border-[#102A54] bg-[#FFFEF8] p-3 text-center">
+            <p className="text-lg font-black">{Math.round(care.bond)}%</p>
+            <p className="text-[0.65rem] font-black uppercase text-[#102A54]/60">Bond bonus</p>
+          </div>
+        </div>
+
         {active ? (
           <button
             type="button"
             onClick={completeExploration}
+            disabled={remainingMinutes > 0}
             className="mt-3 w-full rounded-2xl border-2 border-[#102A54] bg-[#7BE0C3] px-5 py-4 text-sm font-black shadow-[4px_4px_0_#102A54] transition hover:-translate-y-0.5"
           >
-            Claim Return Reward
+            {remainingMinutes > 0 ? "Exploring..." : "Claim Return Reward"}
           </button>
         ) : null}
       </section>
