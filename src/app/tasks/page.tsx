@@ -8,7 +8,7 @@ export default function TasksPage() {
   const reviewedCount = tasks.filter((task) => task.status === "reviewed").length;
 
   return (
-    <DashboardShell title="Task Assignment">
+    <DashboardShell title="Task Assignment" variant="teacher">
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Open tasks" value={tasks.length} />
         <StatCard label="Submitted" value={submittedCount} />

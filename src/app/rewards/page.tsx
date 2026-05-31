@@ -14,7 +14,7 @@ export default function RewardsPage() {
   );
 
   return (
-    <DashboardShell title="Reward System">
+    <DashboardShell title="Reward System" variant="teacher">
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="XP issued" value={xpIssued} />
         <StatCard label="Coins issued" value={coinsIssued} />

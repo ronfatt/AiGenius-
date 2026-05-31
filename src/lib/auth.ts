@@ -7,6 +7,7 @@ export type AuthProfile = {
   email: string;
   role: UserRole;
   centre_id: string | null;
+  profile_code: string | null;
 };
 
 export function getRoleDashboardPath(role: UserRole) {
@@ -30,7 +31,7 @@ export async function getCurrentProfile() {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id,name,email,role,centre_id")
+    .select("id,name,email,role,centre_id,profile_code")
     .eq("id", user.id)
     .single<AuthProfile>();
 

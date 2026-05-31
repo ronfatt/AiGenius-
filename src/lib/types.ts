@@ -9,6 +9,7 @@ export type User = {
   email: string;
   role: UserRole;
   avatarUrl: string;
+  profileCode?: string;
   createdAt: string;
 };
 
@@ -40,6 +41,9 @@ export type StudentProfile = {
   id: string;
   userId: string;
   parentIds: string[];
+  referralCode: string;
+  referredByStudentId?: string | null;
+  schoolTagIds?: string[];
   schoolGrade: string;
   actualLearningLevel: LearningLevel;
   targetLearningLevel: LearningLevel;
@@ -219,3 +223,31 @@ export type ClassGroup = Classroom;
 export type Task = LearningTask;
 export type GameCard = PetCard;
 export type LearningReport = ParentReport;
+
+export type SchoolTag = {
+  id: string;
+  centreId: string;
+  name: string;
+  code: string;
+  area: string;
+  teacherIds: string[];
+  studentIds: string[];
+};
+
+export type TeacherStudentLink = {
+  id: string;
+  teacherId: string;
+  studentId: string;
+  status: "active" | "pending" | "removed";
+  source: "student_code" | "admin" | "classroom";
+  createdAt: string;
+};
+
+export type ParentStudentLink = {
+  id: string;
+  parentId: string;
+  studentId: string;
+  status: "active" | "pending" | "removed";
+  source: "student_code" | "admin";
+  createdAt: string;
+};

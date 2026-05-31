@@ -14,7 +14,7 @@ export default function StudentsPage() {
   );
 
   return (
-    <DashboardShell title="Student Profiles">
+    <DashboardShell title="Student Profiles" variant="teacher">
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Students" value={students.length} />
         <StatCard label="Average attendance" value={`${averageAttendance}%`} />

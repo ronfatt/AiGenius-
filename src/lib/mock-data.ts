@@ -9,6 +9,7 @@ import type {
   Pet,
   PetCard,
   RewardTransaction,
+  SchoolTag,
   StudentCardInventory,
   StudentProfile,
   SubjectSkill,
@@ -61,6 +62,7 @@ export const users: User[] = [
     email: "admin@aigenius.test",
     role: "admin",
     avatarUrl: "/avatars/admin.svg",
+    profileCode: "ADMIN",
     createdAt,
   },
   ...["Teacher Mei", "Teacher Daniel"].map((name, index) => ({
@@ -69,6 +71,7 @@ export const users: User[] = [
     email: `teacher${index + 1}@aigenius.test`,
     role: "teacher" as const,
     avatarUrl: `/avatars/teacher-${index + 1}.svg`,
+    profileCode: ["MEIYA", "DANIE"][index],
     createdAt,
   })),
   ...studentNames.map((name, index) => ({
@@ -77,6 +80,7 @@ export const users: User[] = [
     email: `student${index + 1}@aigenius.test`,
     role: "student" as const,
     avatarUrl: `/avatars/student-${index + 1}.svg`,
+    profileCode: ["ALYSA", "RYANL", "MIKAW", "JAYDE", "SOFIA", "ETHAN", "CHLOW", "ADAMT", "ISABL", "LUCAS"][index],
     createdAt,
   })),
   ...parentNames.map((name, index) => ({
@@ -85,6 +89,7 @@ export const users: User[] = [
     email: `parent${index + 1}@aigenius.test`,
     role: "parent" as const,
     avatarUrl: `/avatars/parent-${index + 1}.svg`,
+    profileCode: ["TANPA", "LIMPA", "WONGP", "LEEPX", "CHENP", "NGPAR", "WONPA", "TEOPA", "LOWPA", "YAPPA"][index],
     createdAt,
   })),
 ];
@@ -122,6 +127,36 @@ export const classrooms: Classroom[] = [
   },
 ];
 
+export const schoolTags: SchoolTag[] = [
+  {
+    id: "school_tag_yuk_chin",
+    centreId: "centre_aigenius",
+    name: "SJKC Yuk Chin",
+    code: "YUK-CHIN",
+    area: "Tawau Central",
+    teacherIds: ["user_teacher_1"],
+    studentIds: ["student_1", "student_2", "student_3", "student_4"],
+  },
+  {
+    id: "school_tag_merotai",
+    centreId: "centre_aigenius",
+    name: "SK Merotai",
+    code: "MEROTAI",
+    area: "Merotai",
+    teacherIds: ["user_teacher_2"],
+    studentIds: ["student_5", "student_6", "student_7"],
+  },
+  {
+    id: "school_tag_tawau_home",
+    centreId: "centre_aigenius",
+    name: "Tawau Home Learners",
+    code: "TW-HOME",
+    area: "Tawau District",
+    teacherIds: ["user_teacher_1", "user_teacher_2"],
+    studentIds: ["student_8", "student_9", "student_10"],
+  },
+];
+
 export const students: StudentProfile[] = studentNames.map((_, index) => {
   const number = index + 1;
   const classroom = classrooms[index < 4 ? 0 : index < 7 ? 1 : 2];
@@ -133,6 +168,9 @@ export const students: StudentProfile[] = studentNames.map((_, index) => {
     id: `student_${number}`,
     userId: `user_student_${number}`,
     parentIds: [`user_parent_${number}`],
+    referralCode: ["ALYSA", "RYANL", "MIKAW", "JAYDE", "SOFIA", "ETHAN", "CHLOW", "ADAMT", "ISABL", "LUCAS"][index],
+    referredByStudentId: number > 7 ? `student_${number - 6}` : null,
+    schoolTagIds: [schoolTags[index < 4 ? 0 : index < 7 ? 1 : 2].id],
     schoolGrade: classroom.grade,
     actualLearningLevel: `Level ${actualLevel.toFixed(1)}` as LearningLevel,
     targetLearningLevel: `Level ${targetLevel.toFixed(1)}` as LearningLevel,

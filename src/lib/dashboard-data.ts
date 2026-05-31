@@ -5,6 +5,7 @@ import {
   pets,
   reports,
   rewardTransactions,
+  schoolTags,
   students,
   subjectSkills,
   taskSubmissions,
@@ -155,6 +156,19 @@ export function getParentDashboard(parentId = "user_parent_1") {
 
 export function getAdminDashboard() {
   const teachers = users.filter((user) => user.role === "teacher");
+  const schoolTagOverview = schoolTags.map((tag) => ({
+    ...tag,
+    teacherCount: tag.teacherIds.length,
+    studentCount: tag.studentIds.length,
+    activeClassCount: classrooms.filter((classroom) =>
+      classroom.studentIds.some((studentId) => tag.studentIds.includes(studentId)),
+    ).length,
+    averageHomework: average(
+      students
+        .filter((student) => tag.studentIds.includes(student.id))
+        .map((student) => student.homeworkCompletionRate),
+    ),
+  }));
 
   return {
     centreName: "AiGenius Tuition Centre",
@@ -167,10 +181,12 @@ export function getAdminDashboard() {
     pets,
     cards,
     battles,
+    schoolTags: schoolTagOverview,
     summary: {
       studentCount: students.length,
       teacherCount: teachers.length,
       classCount: classrooms.length,
+      schoolTagCount: schoolTags.length,
       taskCount: tasks.length,
       averageAttendance: average(students.map((student) => student.attendanceRate)),
       averageHomework: average(students.map((student) => student.homeworkCompletionRate)),

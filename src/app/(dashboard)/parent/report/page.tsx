@@ -10,7 +10,7 @@ export default function ParentReportPage() {
   const gap = detectLearningGap(dashboard.child.schoolGrade, dashboard.child.actualLearningLevel);
 
   return (
-    <DashboardShell title="Parent English Report">
+    <DashboardShell title="Parent English Report" variant="parent">
       <section className="mb-5 rounded-[2rem] border-4 border-[#102A54] bg-[#FFFEF8] p-5 shadow-[8px_8px_0_rgba(16,42,84,0.12)]">
         <p className="inline-flex rounded-full border-2 border-[#102A54] bg-[#FFB199] px-3 py-1 text-xs font-black uppercase tracking-[0.16em]">
           Monthly report

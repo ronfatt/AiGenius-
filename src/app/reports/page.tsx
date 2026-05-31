@@ -10,7 +10,7 @@ export default function ReportsPage() {
   const homeworkCompletion = 87;
 
   return (
-    <DashboardShell title="Learning Report">
+    <DashboardShell title="Learning Report" variant="parent">
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Progress" value={`${progress}%`} />
         <StatCard label="Attendance" value={`${attendance}%`} />

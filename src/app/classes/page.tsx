@@ -6,7 +6,7 @@ import { classes, students } from "@/lib/mock-data";
 
 export default function ClassesPage() {
   return (
-    <DashboardShell title="Class Management">
+    <DashboardShell title="Class Management" variant="teacher">
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Active classes" value={classes.length} />
         <StatCard label="Enrolled students" value={students.length} />

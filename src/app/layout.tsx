@@ -34,8 +34,8 @@ export const metadata: Metadata = {
   publisher: "AiGenius Tuition Centre",
   icons: {
     icon: [
+      { url: "/favicon.ico", type: "image/x-icon" },
       { url: "/aigenius-logo.png", type: "image/png" },
-      { url: "/favicon.ico" },
     ],
     apple: [{ url: "/aigenius-logo.png", type: "image/png" }],
     shortcut: ["/aigenius-logo.png"],

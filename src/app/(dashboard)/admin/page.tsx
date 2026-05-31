@@ -2,9 +2,15 @@ import { ProgressChart } from "@/components/charts/ProgressChart";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { ActionButton, Card, ListRow, StatCard } from "@/components/ui";
 import { getAdminDashboard, getClassTeacherName } from "@/lib/dashboard-data";
+import { createSchoolTagAction } from "./actions";
 
-export default function AdminDashboard() {
+type DashboardPageProps = {
+  searchParams?: Promise<{ status?: string; error?: string }>;
+};
+
+export default async function AdminDashboard({ searchParams }: DashboardPageProps) {
   const dashboard = getAdminDashboard();
+  const message = await searchParams;
   const healthItems = [
     ["Auth", "Ready for Supabase", "OK"],
     ["Database", "Mock data active", "Mock"],
@@ -12,7 +18,17 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <DashboardShell title="Admin Dashboard">
+    <DashboardShell title="Admin Dashboard" variant="admin">
+      {message?.status || message?.error ? (
+        <div
+          className={`mb-4 rounded-2xl border-2 border-[#102A54] px-4 py-3 text-sm font-black ${
+            message.error ? "bg-[#FFB199]" : "bg-[#7BE0C3]"
+          }`}
+        >
+          {message.error ?? message.status}
+        </div>
+      ) : null}
+
       <section className="mb-5 rounded-[2rem] border-4 border-[#102A54] bg-gradient-to-br from-[#FFF7E2] via-[#FFFEF8] to-[#EEF2F5] p-5 text-[#102A54] shadow-[8px_8px_0_rgba(16,42,84,0.16)]">
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
           <div>
@@ -39,8 +55,8 @@ export default function AdminDashboard() {
         <StatCard value={dashboard.summary.classCount.toString()} label="Active classes" />
         <StatCard value={dashboard.summary.teacherCount.toString()} label="Teachers" />
         <StatCard
-          value={dashboard.summary.totalRewardsIssued.toString()}
-          label="Rewards issued"
+          value={dashboard.summary.schoolTagCount.toString()}
+          label="School tags"
         />
       </div>
 
@@ -75,6 +91,68 @@ export default function AdminDashboard() {
               <ListRow key={title} title={title} meta={meta} badge={badge} />
             ))}
           </div>
+        </Card>
+      </div>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <Card>
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FF6B57]">
+                School participation
+              </p>
+              <h2 className="mt-2 text-2xl font-black">School tags overview</h2>
+            </div>
+            <span className="rounded-full border-2 border-[#102A54] bg-[#FFD95A] px-3 py-1 text-xs font-black text-[#102A54]">
+              {dashboard.summary.studentCount} students
+            </span>
+          </div>
+          <div className="mt-4 grid gap-3">
+            {dashboard.schoolTags.map((tag) => (
+              <ListRow
+                key={tag.id}
+                title={tag.name}
+                meta={`${tag.area} · ${tag.teacherCount} teachers · ${tag.studentCount} students · ${tag.averageHomework}% homework`}
+                badge={tag.code}
+              />
+            ))}
+          </div>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-[#FFF7E2] to-[#4FB8FF]/25">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FF6B57]">
+            Admin setup
+          </p>
+          <h2 className="mt-2 text-2xl font-black">Create school tag</h2>
+          <p className="mt-2 text-sm font-bold leading-6 text-[#102A54]/65">
+            Use tags to group students and teachers by school, area, or feeder
+            community. This helps track participation and growth.
+          </p>
+          <form action={createSchoolTagAction} className="mt-4 grid gap-3">
+            <input
+              name="name"
+              placeholder="SJKC Yuk Chin"
+              className="min-h-12 rounded-2xl border-2 border-[#102A54] bg-[#FFFEF8] px-4 text-sm font-bold text-[#102A54] outline-none"
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <input
+                name="code"
+                placeholder="YUK-CHIN"
+                className="min-h-12 rounded-2xl border-2 border-[#102A54] bg-[#FFFEF8] px-4 text-sm font-bold uppercase text-[#102A54] outline-none"
+              />
+              <input
+                name="area"
+                placeholder="Tawau Central"
+                className="min-h-12 rounded-2xl border-2 border-[#102A54] bg-[#FFFEF8] px-4 text-sm font-bold text-[#102A54] outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              className="min-h-14 rounded-2xl border-2 border-[#102A54] bg-[#FFD95A] px-5 text-sm font-black shadow-[4px_4px_0_#102A54] transition hover:-translate-y-0.5"
+            >
+              Save school tag
+            </button>
+          </form>
         </Card>
       </div>
 

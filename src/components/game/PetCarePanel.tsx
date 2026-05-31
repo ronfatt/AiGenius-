@@ -1,5 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getPetCareState } from "@/lib/exploration";
+import { getCurrentPetEmotion, getPetEmotionSet } from "@/lib/pet-emotions";
 import type { Pet } from "@/lib/types";
 
 function CareMeter({ label, value }: { label: string; value: number }) {
@@ -21,6 +23,8 @@ function CareMeter({ label, value }: { label: string; value: number }) {
 
 export function PetCarePanel({ pet }: { pet: Pet }) {
   const care = getPetCareState(pet);
+  const currentEmotion = getCurrentPetEmotion(pet);
+  const emotions = getPetEmotionSet(pet);
 
   return (
     <section className="rounded-[2rem] border-4 border-[#102A54] bg-[#FFFEF8] p-5 shadow-[8px_8px_0_rgba(16,42,84,0.12)]">
@@ -43,6 +47,48 @@ export function PetCarePanel({ pet }: { pet: Pet }) {
         <CareMeter label="Mood" value={care.mood} />
         <CareMeter label="Energy" value={care.energy} />
         <CareMeter label="Bond" value={care.bond} />
+      </div>
+
+      <div className="mt-5 rounded-[1.5rem] border-2 border-[#102A54]/20 bg-[#FFF7E2] p-4">
+        <div className="flex items-center gap-3">
+          <div className="relative h-16 w-16 overflow-hidden rounded-2xl border-2 border-[#102A54] bg-[#FFFEF8]">
+            <Image
+              src={currentEmotion.imageUrl}
+              alt={`${pet.name} ${currentEmotion.label}`}
+              width={128}
+              height={128}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div>
+            <p className="text-xs font-black uppercase tracking-wide text-[#FF6B57]">
+              Current emotion
+            </p>
+            <h3 className="text-xl font-black">{currentEmotion.label}</h3>
+            <p className="text-xs font-bold text-[#102A54]/60">{currentEmotion.message}</p>
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-7 gap-2">
+          {emotions.map((emotion) => (
+            <div
+              key={emotion.emotion}
+              className={`overflow-hidden rounded-xl border-2 bg-[#FFFEF8] ${
+                emotion.emotion === currentEmotion.emotion
+                  ? "border-[#102A54] shadow-[2px_2px_0_#102A54]"
+                  : "border-[#102A54]/20"
+              }`}
+              title={emotion.label}
+            >
+              <Image
+                src={emotion.imageUrl}
+                alt={emotion.label}
+                width={72}
+                height={72}
+                className="aspect-square w-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">

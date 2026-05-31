@@ -23,7 +23,7 @@ export default function PetsPage() {
   };
 
   return (
-    <DashboardShell title="Pet System">
+    <DashboardShell title="Pet System" variant="teacher">
       <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
         <PetCard pet={pet} />
         <SkillRadarChart stats={stats} />
