@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fff7e2;
+  --foreground: #102a54;
+  --navy: #102a54;
+  --cream: #fff7e2;
+  --yellow: #ffd95a;
+  --mint: #7be0c3;
+  --sky: #4fb8ff;
+  --coral: #ff6b57;
+  --peach: #ffb199;
+  --soft-gray: #eef2f5;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body::selection {
+  background: var(--yellow);
+  color: var(--navy);
+}
+
+@keyframes pet-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes progress-fill {
+  from {
+    transform: scaleX(0.85);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.pet-bounce {
+  animation: pet-bounce 2.8s ease-in-out infinite;
+}
+
+.progress-fill {
+  animation: progress-fill 700ms ease-out both;
+  transform-origin: left;
+}
