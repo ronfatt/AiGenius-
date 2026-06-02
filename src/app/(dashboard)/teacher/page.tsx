@@ -2,11 +2,12 @@ import Link from "next/link";
 import { ProgressChart } from "@/components/charts/ProgressChart";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { SpecialTicketPanel } from "@/components/teacher/SpecialTicketPanel";
-import { ActionButton, Card, ListRow, StatCard } from "@/components/ui";
+import { Card, ListRow, StatCard } from "@/components/ui";
 import { getCurrentProfile } from "@/lib/auth";
 import { addStudentByCodeAction } from "./actions";
 import {
   getClassTeacherName,
+  getTeacherDashboardFromSupabase,
   getStudentName,
   getTaskTitle,
   getTeacherDashboard,
@@ -17,10 +18,21 @@ type DashboardPageProps = {
 };
 
 export default async function TeacherDashboard({ searchParams }: DashboardPageProps) {
-  const dashboard = getTeacherDashboard();
   const message = await searchParams;
   const currentProfile = await getCurrentProfile().catch(() => null);
+  const liveDashboard =
+    currentProfile?.role === "teacher"
+      ? await getTeacherDashboardFromSupabase(currentProfile.id)
+      : null;
+  const dashboard = liveDashboard ?? getTeacherDashboard();
   const teacherCode = currentProfile?.profile_code ?? dashboard.teacher?.profileCode ?? "MEIYA";
+  const getDisplayStudentName = (studentId: string) => {
+    const student = dashboard.students.find((item) => item.id === studentId);
+
+    if (!student) return "Student";
+
+    return dashboard.studentNameByUserId?.[student.userId] ?? getStudentName(student);
+  };
 
   return (
     <DashboardShell title="Teacher Dashboard" variant="teacher">
@@ -37,7 +49,7 @@ export default async function TeacherDashboard({ searchParams }: DashboardPagePr
       <section className="mb-5 flex flex-col justify-between gap-4 rounded-[2rem] border-4 border-[#102A54] bg-[#FFFEF8] p-5 shadow-[8px_8px_0_rgba(16,42,84,0.12)] lg:flex-row lg:items-center">
         <div>
           <p className="inline-flex rounded-full border-2 border-[#102A54] bg-[#7BE0C3] px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-[#102A54]">
-            Teacher command desk
+            Teacher command desk · {liveDashboard ? "Live Supabase" : "Mock fallback"}
           </p>
           <h2 className="mt-3 text-3xl font-black text-[#102A54]">
             Welcome, {dashboard.teacher?.name ?? "Teacher"}
@@ -56,7 +68,12 @@ export default async function TeacherDashboard({ searchParams }: DashboardPagePr
           >
             Assign task
           </Link>
-          <ActionButton tone="purple">Reward student</ActionButton>
+          <Link
+            href="/teacher/reviews"
+            className="grid min-h-14 place-items-center rounded-2xl border-2 border-[#102A54] bg-[#7BE0C3] px-5 text-sm font-black text-[#102A54] shadow-[4px_4px_0_#102A54] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#102A54]"
+          >
+            Review submissions
+          </Link>
         </div>
       </section>
 
@@ -80,7 +97,9 @@ export default async function TeacherDashboard({ searchParams }: DashboardPagePr
               <ListRow
                 key={classroom.id}
                 title={classroom.name}
-                meta={`${classroom.subject} · ${classroom.studentIds.length} students · ${getClassTeacherName(classroom)}`}
+                meta={`${classroom.subject} · ${classroom.studentIds.length} students · ${
+                  dashboard.teacherNameById?.[classroom.teacherId] ?? getClassTeacherName(classroom)
+                }`}
                 badge={classroom.grade}
               />
             ))}
@@ -93,7 +112,7 @@ export default async function TeacherDashboard({ searchParams }: DashboardPagePr
             {dashboard.weakStudents.slice(0, 3).map((student) => (
               <ListRow
                 key={student.id}
-                title={getStudentName(student)}
+                title={dashboard.studentNameByUserId?.[student.userId] ?? getStudentName(student)}
                 meta={`${student.homeworkCompletionRate}% homework · ${student.attendanceRate}% attendance`}
                 badge="Check"
               />
@@ -109,7 +128,7 @@ export default async function TeacherDashboard({ searchParams }: DashboardPagePr
             {dashboard.students.slice(0, 5).map((student) => (
               <Link key={student.id} href={`/teacher/students/${student.id}`} className="block transition hover:-translate-y-0.5">
                 <ListRow
-                  title={getStudentName(student)}
+                  title={dashboard.studentNameByUserId?.[student.userId] ?? getStudentName(student)}
                   meta={`${student.actualLearningLevel} · ${student.starCoins} coins`}
                   badge={`${student.totalXP} XP`}
                 />
@@ -124,7 +143,7 @@ export default async function TeacherDashboard({ searchParams }: DashboardPagePr
             {dashboard.topStudents.map((student) => (
               <ListRow
                 key={student.id}
-                title={getStudentName(student)}
+                title={dashboard.studentNameByUserId?.[student.userId] ?? getStudentName(student)}
                 meta={`${student.homeworkCompletionRate}% homework`}
                 badge={`${student.totalXP} XP`}
               />
@@ -138,12 +157,8 @@ export default async function TeacherDashboard({ searchParams }: DashboardPagePr
             {dashboard.pendingSubmissions.map((submission) => (
               <ListRow
                 key={submission.id}
-                title={getTaskTitle(submission.taskId)}
-                meta={`${getStudentName(
-                  dashboard.students.find(
-                    (student) => student.id === submission.studentId,
-                  ) ?? dashboard.students[0],
-                )} · score ${submission.score}`}
+                title={dashboard.taskTitleById?.[submission.taskId] ?? getTaskTitle(submission.taskId)}
+                meta={`${getDisplayStudentName(submission.studentId)} · score ${submission.score}`}
                 badge="Review"
               />
             ))}
@@ -192,7 +207,7 @@ export default async function TeacherDashboard({ searchParams }: DashboardPagePr
             {dashboard.leaderboard.map((student, index) => (
               <ListRow
                 key={student.id}
-                title={`#${index + 1} ${getStudentName(student)}`}
+                title={`#${index + 1} ${dashboard.studentNameByUserId?.[student.userId] ?? getStudentName(student)}`}
                 meta={`${student.streakDays} day streak`}
                 badge={`${student.totalXP} XP`}
               />

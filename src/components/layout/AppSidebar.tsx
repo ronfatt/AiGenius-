@@ -15,6 +15,7 @@ const navItems = [
   { href: "/students", label: "Students" },
   { href: "/tasks", label: "Tasks" },
   { href: "/teacher/tasks/create", label: "Task Planner" },
+  { href: "/teacher/reviews", label: "Review Queue" },
   { href: "/admin/setup", label: "Centre Setup" },
   { href: "/rewards", label: "Rewards" },
   { href: "/pets", label: "Pets" },

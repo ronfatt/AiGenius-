@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:link": "supabase link --project-ref fhgedoghywxgrzokcqeh",
+    "db:push": "supabase db push"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

@@ -1,19 +1,25 @@
 import { ProgressChart } from "@/components/charts/ProgressChart";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { Card, ListRow, StatCard } from "@/components/ui";
+import { getCurrentProfile } from "@/lib/auth";
 import { getCefrTargetForGrade } from "@/lib/cefr-level";
-import { getParentDashboard } from "@/lib/dashboard-data";
+import { getParentDashboard, getParentDashboardFromSupabase } from "@/lib/dashboard-data";
 import { detectLearningGap } from "@/lib/learning-level";
 
-export default function ParentReportPage() {
-  const dashboard = getParentDashboard();
+export default async function ParentReportPage() {
+  const currentProfile = await getCurrentProfile().catch(() => null);
+  const liveDashboard =
+    currentProfile?.role === "parent"
+      ? await getParentDashboardFromSupabase(currentProfile.id)
+      : null;
+  const dashboard = liveDashboard ?? getParentDashboard();
   const gap = detectLearningGap(dashboard.child.schoolGrade, dashboard.child.actualLearningLevel);
 
   return (
     <DashboardShell title="Parent English Report" variant="parent">
       <section className="mb-5 rounded-[2rem] border-4 border-[#102A54] bg-[#FFFEF8] p-5 shadow-[8px_8px_0_rgba(16,42,84,0.12)]">
         <p className="inline-flex rounded-full border-2 border-[#102A54] bg-[#FFB199] px-3 py-1 text-xs font-black uppercase tracking-[0.16em]">
-          Monthly report
+          Monthly report · {liveDashboard ? "Live Supabase" : "Auto preview"}
         </p>
         <h1 className="mt-3 text-4xl font-black text-[#102A54]">English Progress Summary</h1>
         <p className="mt-2 text-sm font-bold leading-6 text-[#102A54]/65">{dashboard.report.summary}</p>

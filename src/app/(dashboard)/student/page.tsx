@@ -3,7 +3,7 @@ import Link from "next/link";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { getCurrentProfile } from "@/lib/auth";
 import { getDailyLearningTiles } from "@/lib/daily-learning";
-import { getStudentDashboard } from "@/lib/dashboard-data";
+import { getStudentDashboard, getStudentDashboardFromSupabase } from "@/lib/dashboard-data";
 import { getCurrentPetEmotion } from "@/lib/pet-emotions";
 import { adminTable } from "@/lib/supabase-admin-tables";
 
@@ -72,7 +72,12 @@ function ProgressRail({ value }: { value: number }) {
 }
 
 export default async function StudentDashboard() {
-  const dashboard = getStudentDashboard();
+  const currentProfile = await getCurrentProfile().catch(() => null);
+  const liveDashboard =
+    currentProfile?.role === "student"
+      ? await getStudentDashboardFromSupabase(currentProfile.id)
+      : null;
+  const dashboard = liveDashboard ?? getStudentDashboard();
   const currentStudentCode = await getCurrentStudentCode();
   const currentEmotion = getCurrentPetEmotion(dashboard.pet);
   const dailyTiles = getDailyLearningTiles();
@@ -103,7 +108,7 @@ export default async function StudentDashboard() {
                 </div>
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FFCF17]">
-                    StarPet Academy
+                    StarPet Academy · {liveDashboard ? "Live" : "Demo"}
                   </p>
                   <h1 className="text-xl font-black">Hi, {studentName.split(" ")[0]}</h1>
                 </div>

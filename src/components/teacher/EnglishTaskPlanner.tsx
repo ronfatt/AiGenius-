@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
+import { publishTeacherTaskAction } from "@/app/(dashboard)/teacher/tasks/create/actions";
 import { getCefrTargetForGrade } from "@/lib/cefr-level";
 import {
   buildMockGeneratedEnglishTask,
@@ -14,6 +15,18 @@ import type { LearningTaskBand } from "@/lib/types";
 const difficultyOptions = [1, 2, 3, 4, 5] as const;
 const taskBands: LearningTaskBand[] = ["Foundation", "Standard", "Challenge"];
 
+export type TeacherClassOption = {
+  id: string;
+  name: string;
+  grade: string;
+};
+
+const fallbackClassOptions: TeacherClassOption[] = classrooms.map((classroom) => ({
+  id: classroom.id,
+  name: classroom.name,
+  grade: classroom.grade,
+}));
+
 function SelectField({
   label,
   value,
@@ -22,7 +35,7 @@ function SelectField({
 }: {
   label: string;
   value: string;
-  options: string[];
+  options: { label: string; value: string }[];
   onChange: (value: string) => void;
 }) {
   return (
@@ -34,8 +47,8 @@ function SelectField({
         className="rounded-2xl border-2 border-[#102A54] bg-[#FFF7E2] px-4 py-3 text-sm font-bold outline-none transition focus:bg-white"
       >
         {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>
@@ -43,10 +56,16 @@ function SelectField({
   );
 }
 
-export function EnglishTaskPlanner() {
-  const [classId, setClassId] = useState(classrooms[1]?.id ?? classrooms[0].id);
+export function EnglishTaskPlanner({
+  classOptions = fallbackClassOptions,
+}: {
+  classOptions?: TeacherClassOption[];
+}) {
+  const [classId, setClassId] = useState(classOptions[0]?.id ?? fallbackClassOptions[0].id);
   const selectedClass =
-    classrooms.find((classroom) => classroom.id === classId) ?? classrooms[0];
+    classOptions.find((classroom) => classroom.id === classId) ??
+    fallbackClassOptions.find((classroom) => classroom.id === classId) ??
+    fallbackClassOptions[0];
   const [schoolGrade, setSchoolGrade] = useState(selectedClass.grade);
   const [skillDomain, setSkillDomain] = useState<EnglishCoreSkillDomain>("Reading");
   const [weaknessTag, setWeaknessTag] = useState("main idea");
@@ -55,6 +74,13 @@ export function EnglishTaskPlanner() {
   const [generatedTask, setGeneratedTask] = useState<GeneratedEnglishTask | null>(null);
   const [source, setSource] = useState<"ai" | "mock" | "local">("local");
   const [status, setStatus] = useState<"idle" | "generating" | "published">("idle");
+  const [publishState, publishAction, isPublishing] = useActionState(
+    publishTeacherTaskAction,
+    {
+      ok: false,
+      message: "",
+    },
+  );
 
   const cefrTarget = getCefrTargetForGrade(schoolGrade);
   const skillTags = getSkillTags(skillDomain);
@@ -119,9 +145,12 @@ export function EnglishTaskPlanner() {
           <SelectField
             label="Class"
             value={classId}
-            options={classrooms.map((classroom) => classroom.id)}
+            options={classOptions.map((classroom) => ({
+              label: `${classroom.name} · ${classroom.grade}`,
+              value: classroom.id,
+            }))}
             onChange={(value) => {
-              const nextClass = classrooms.find((classroom) => classroom.id === value);
+              const nextClass = classOptions.find((classroom) => classroom.id === value);
               setClassId(value);
               if (nextClass) setSchoolGrade(nextClass.grade);
               setGeneratedTask(null);
@@ -131,7 +160,9 @@ export function EnglishTaskPlanner() {
           <SelectField
             label="School year"
             value={schoolGrade}
-            options={["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6"]}
+            options={["Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6"].map(
+              (year) => ({ label: year, value: year }),
+            )}
             onChange={(value) => {
               setSchoolGrade(value);
               setGeneratedTask(null);
@@ -141,7 +172,7 @@ export function EnglishTaskPlanner() {
           <SelectField
             label="English skill"
             value={skillDomain}
-            options={englishCoreSkillDomains}
+            options={englishCoreSkillDomains.map((domain) => ({ label: domain, value: domain }))}
             onChange={(value) => {
               const nextDomain = value as EnglishCoreSkillDomain;
               setSkillDomain(nextDomain);
@@ -153,7 +184,7 @@ export function EnglishTaskPlanner() {
           <SelectField
             label="Weakness tag"
             value={weaknessTag}
-            options={skillTags}
+            options={skillTags.map((tag) => ({ label: tag, value: tag }))}
             onChange={(value) => {
               setWeaknessTag(value);
               setGeneratedTask(null);
@@ -163,7 +194,7 @@ export function EnglishTaskPlanner() {
           <SelectField
             label="Task band"
             value={taskBand}
-            options={taskBands}
+            options={taskBands.map((band) => ({ label: band, value: band }))}
             onChange={(value) => {
               setTaskBand(value as LearningTaskBand);
               setGeneratedTask(null);
@@ -173,7 +204,10 @@ export function EnglishTaskPlanner() {
           <SelectField
             label="Difficulty"
             value={difficultyLevel.toString()}
-            options={difficultyOptions.map(String)}
+            options={difficultyOptions.map((level) => ({
+              label: level.toString(),
+              value: level.toString(),
+            }))}
             onChange={(value) => {
               setDifficultyLevel(Number(value) as 1 | 2 | 3 | 4 | 5);
               setGeneratedTask(null);
@@ -190,18 +224,27 @@ export function EnglishTaskPlanner() {
           >
             {status === "generating" ? "Generating..." : "Generate with AI"}
           </button>
-          <button
-            type="button"
-            onClick={() => setStatus("published")}
-            className="rounded-2xl border-2 border-[#102A54] bg-[#FFD95A] px-5 py-4 text-sm font-black text-[#102A54] shadow-[4px_4px_0_#102A54] transition hover:-translate-y-0.5"
-          >
-            Publish Mock Task
-          </button>
+          <form action={publishAction}>
+            <input type="hidden" name="classId" value={classId} />
+            <input type="hidden" name="task" value={JSON.stringify(previewTask)} />
+            <button
+              type="submit"
+              disabled={isPublishing}
+              className="w-full rounded-2xl border-2 border-[#102A54] bg-[#FFD95A] px-5 py-4 text-sm font-black text-[#102A54] shadow-[4px_4px_0_#102A54] transition hover:-translate-y-0.5 disabled:opacity-60"
+            >
+              {isPublishing ? "Publishing..." : "Publish to Supabase"}
+            </button>
+          </form>
         </div>
 
-        {status === "published" ? (
-          <p className="mt-4 rounded-2xl border-2 border-[#102A54] bg-[#7BE0C3] p-4 text-sm font-black text-[#102A54]">
-            Mock published. Supabase saving will connect this to `learning_tasks` later.
+        {publishState.message ? (
+          <p
+            className={`mt-4 rounded-2xl border-2 border-[#102A54] p-4 text-sm font-black text-[#102A54] ${
+              publishState.ok ? "bg-[#7BE0C3]" : "bg-[#FFB199]"
+            }`}
+          >
+            {publishState.message}
+            {publishState.taskId ? ` Task ID: ${publishState.taskId}` : ""}
           </p>
         ) : null}
       </section>

@@ -1,8 +1,13 @@
 import { notFound } from "next/navigation";
 import { EnglishQuestFlow } from "@/components/student/EnglishQuestFlow";
 import { DashboardShell } from "@/components/layout/DashboardShell";
+import { getCurrentProfile } from "@/lib/auth";
 import { getStudentDashboard } from "@/lib/dashboard-data";
 import { tasks } from "@/lib/mock-data";
+import { getStudentTaskFromSupabase } from "@/lib/student-task-data";
+
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default async function StudentTaskDetailPage({
   params,
@@ -10,9 +15,13 @@ export default async function StudentTaskDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const task = tasks.find((item) => item.id === id);
+  const profile = await getCurrentProfile().catch(() => null);
+  const supabaseTask =
+    profile?.role === "student" && uuidPattern.test(id)
+      ? await getStudentTaskFromSupabase(profile.id, id)
+      : null;
+  const task = supabaseTask?.task ?? tasks.find((item) => item.id === id);
   if (!task) notFound();
-
   const dashboard = getStudentDashboard();
 
   return (

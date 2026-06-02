@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
+import { submitStudentTaskAction } from "@/app/(dashboard)/student/tasks/actions";
 import { calculateReward } from "@/lib/rewards";
 import { applyRewardToPet, getEvolutionProgress } from "@/lib/pet-system";
 import type { LearningTask, Pet } from "@/lib/types";
@@ -17,14 +18,76 @@ function ProgressRail({ value }: { value: number }) {
   );
 }
 
+function getScoreBand(score: number) {
+  if (score >= 85) {
+    return {
+      label: "Mastery",
+      title: "Great work. You are ready for a harder quest.",
+      message:
+        "You answered most questions correctly. Keep the habit and try a challenge task next.",
+      nextTaskType: "Challenge Quest",
+      nextAction: "Try a higher difficulty task for the same English skill.",
+    };
+  }
+
+  if (score >= 60) {
+    return {
+      label: "Building",
+      title: "Good progress. One more practice round will help.",
+      message:
+        "You understood part of the skill. Review the missed questions, then try a standard task.",
+      nextTaskType: "Standard Practice",
+      nextAction: "Repeat this skill with a short mixed practice.",
+    };
+  }
+
+  return {
+    label: "Foundation",
+    title: "Let us rebuild the basics step by step.",
+    message:
+      "This skill still needs support. Focus on the corrected answers before moving forward.",
+    nextTaskType: "Foundation Review",
+    nextAction: "Do an easier task that teaches the same skill with more examples.",
+  };
+}
+
+function getQuestionSkillLabel(questionType: string) {
+  const labels: Record<string, string> = {
+    reading: "reading comprehension",
+    grammar: "grammar accuracy",
+    vocabulary: "word meaning",
+    writing: "sentence writing",
+    speaking: "spoken response",
+    listening: "listening understanding",
+  };
+
+  return labels[questionType] ?? "English skill";
+}
+
 export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [submitState, submitAction, isSubmitting] = useActionState(submitStudentTaskAction, {
+    ok: false,
+    message: "",
+  });
 
   const questions = task.questions;
   const answeredCount = questions.filter((question) => answers[question.id]).length;
   const correctCount = questions.filter((question) => answers[question.id] === question.answer).length;
+  const incorrectQuestions = questions.filter(
+    (question) => submitted && answers[question.id] !== question.answer,
+  );
   const score = Math.round((correctCount / questions.length) * 100);
+  const feedback = getScoreBand(score);
+  const learnedSkills = Array.from(
+    new Set([
+      task.skillDomain,
+      ...questions
+        .filter((question) => answers[question.id] === question.answer)
+        .map((question) => getQuestionSkillLabel(question.type)),
+    ]),
+  ).slice(0, 3);
   const reward = useMemo(
     () =>
       calculateReward({
@@ -99,6 +162,15 @@ export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }
               <p className="mt-1 text-sm font-bold text-white/65">
                 {correctCount} of {questions.length} correct
               </p>
+              <div className="mt-4 rounded-[1.5rem] bg-[#FFCF17] p-4 text-[#102A54]">
+                <p className="text-xs font-black uppercase tracking-wide opacity-70">
+                  Learning level
+                </p>
+                <p className="text-2xl font-black">{feedback.label}</p>
+                <p className="mt-1 text-sm font-bold leading-5 opacity-75">
+                  {feedback.title}
+                </p>
+              </div>
               <div className="mt-4 rounded-[1.5rem] bg-[#39D353] p-4 text-[#05245F]">
                 <p className="text-xs font-black uppercase tracking-wide opacity-70">Earned</p>
                 <p className="text-2xl font-black">+{reward.xp} XP · +{reward.starCoins} coins</p>
@@ -110,6 +182,12 @@ export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }
                   Evolution progress {evolution.progressPercent}%
                 </p>
               </div>
+              <Link
+                href="/student/tasks"
+                className="mt-4 grid min-h-12 place-items-center rounded-2xl bg-gradient-to-r from-[#8B38FF] to-[#4FB8FF] px-4 text-sm font-black text-white"
+              >
+                Next: {feedback.nextTaskType}
+              </Link>
             </>
           ) : (
             <p className="mt-2 text-sm font-bold leading-6 text-white/65">
@@ -168,22 +246,125 @@ export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }
                 })}
               </div>
               {submitted ? (
-                <p className="mt-3 rounded-2xl bg-[#071E63]/70 p-3 text-sm font-bold leading-6 text-white/75">
-                  {answers[question.id] === question.answer ? "Correct. " : "Review this. "}
-                  {question.explanation}
-                </p>
+                <div
+                  className={`mt-3 rounded-2xl p-3 text-sm font-bold leading-6 ${
+                    answers[question.id] === question.answer
+                      ? "bg-[#39D353]/20 text-[#BFFFD0]"
+                      : "bg-[#FF6B57]/18 text-[#FFD7D1]"
+                  }`}
+                >
+                  <p className="font-black">
+                    {answers[question.id] === question.answer
+                      ? "Correct. You used the skill well."
+                      : `Correction: the answer is "${question.answer}".`}
+                  </p>
+                  <p className="mt-1 text-white/75">{question.explanation}</p>
+                  {answers[question.id] !== question.answer ? (
+                    <p className="mt-2 text-white/75">
+                      Fix-it action: read the question again, find the clue, then say why the correct answer fits.
+                    </p>
+                  ) : null}
+                </div>
               ) : null}
             </div>
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={() => setSubmitted(true)}
-          className="min-h-14 rounded-2xl bg-gradient-to-r from-[#8B38FF] to-[#4FB8FF] px-5 py-4 text-sm font-black text-white shadow-[0_14px_30px_rgba(79,184,255,0.25)] transition hover:-translate-y-0.5"
+        {submitted ? (
+          <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">
+            <div className="rounded-[1.8rem] border border-white/15 bg-white/10 p-4 shadow-[0_16px_38px_rgba(0,0,0,0.18)] backdrop-blur">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FFCF17]">
+                Learning feedback
+              </p>
+              <h3 className="mt-2 text-2xl font-black">{feedback.title}</h3>
+              <p className="mt-2 text-sm font-bold leading-6 text-white/68">
+                {feedback.message}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {learnedSkills.map((skill) => (
+                  <span key={skill} className="rounded-full bg-[#39D353] px-3 py-2 text-xs font-black text-[#05245F]">
+                    Learned: {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-[1.8rem] border border-white/15 bg-white/10 p-4 shadow-[0_16px_38px_rgba(0,0,0,0.18)] backdrop-blur">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FFCF17]">
+                Recommended next
+              </p>
+              <h3 className="mt-2 text-2xl font-black">{feedback.nextTaskType}</h3>
+              <p className="mt-2 text-sm font-bold leading-6 text-white/68">
+                {feedback.nextAction}
+              </p>
+              <Link
+                href="/student/tasks"
+                className="mt-4 inline-flex rounded-2xl bg-[#FFCF17] px-5 py-3 text-sm font-black text-[#102A54]"
+              >
+                Go to next quest
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
+        {submitted && incorrectQuestions.length > 0 ? (
+          <div className="rounded-[1.8rem] border border-white/15 bg-[#FF6B57]/12 p-4 shadow-[0_16px_38px_rgba(0,0,0,0.18)] backdrop-blur">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FFCF17]">
+              Mistake review
+            </p>
+            <h3 className="mt-2 text-2xl font-black">Fix these before the next quest</h3>
+            <div className="mt-4 grid gap-3">
+              {incorrectQuestions.map((question, index) => (
+                <div key={question.id} className="rounded-2xl bg-[#071E63]/70 p-4">
+                  <p className="text-sm font-black text-white">
+                    {index + 1}. {getQuestionSkillLabel(question.type)}
+                  </p>
+                  <p className="mt-2 text-sm font-bold leading-6 text-white/70">
+                    Your answer: {answers[question.id] || "No answer"}
+                  </p>
+                  <p className="text-sm font-bold leading-6 text-[#BFFFD0]">
+                    Correct answer: {question.answer}
+                  </p>
+                  <p className="mt-2 text-sm font-bold leading-6 text-white/70">
+                    {question.explanation}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {submitState.message ? (
+          <div
+            className={`rounded-[1.5rem] border border-white/15 p-4 text-sm font-black ${
+              submitState.ok ? "bg-[#39D353]/20 text-[#BFFFD0]" : "bg-[#FFCF17]/18 text-[#FFEF82]"
+            }`}
+          >
+            {submitState.message}
+          </div>
+        ) : null}
+
+        <form
+          action={submitAction}
+          onSubmit={() => setSubmitted(true)}
         >
-          Submit English Quest
-        </button>
+          <input type="hidden" name="taskId" value={task.id} />
+          <input type="hidden" name="score" value={score} />
+          <input type="hidden" name="answers" value={JSON.stringify(answers)} />
+          <button
+            type="submit"
+            disabled={answeredCount < questions.length || isSubmitting}
+            className="min-h-14 w-full rounded-2xl bg-gradient-to-r from-[#8B38FF] to-[#4FB8FF] px-5 py-4 text-sm font-black text-white shadow-[0_14px_30px_rgba(79,184,255,0.25)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {answeredCount < questions.length
+              ? `Answer ${questions.length - answeredCount} more`
+              : isSubmitting
+                ? "Submitting..."
+                : submitted
+                  ? "Submit Again"
+                  : "Submit English Quest"}
+          </button>
+        </form>
       </section>
     </div>
   );

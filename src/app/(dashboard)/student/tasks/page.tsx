@@ -1,11 +1,17 @@
 import Link from "next/link";
 import { DashboardShell } from "@/components/layout/DashboardShell";
+import { getCurrentProfile } from "@/lib/auth";
 import { getStudentDashboard } from "@/lib/dashboard-data";
+import { getStudentTasksFromSupabase } from "@/lib/student-task-data";
 
-export default function StudentTasksPage() {
+export default async function StudentTasksPage() {
   const dashboard = getStudentDashboard();
-  const requiredTasks = dashboard.tasks.slice(0, 3);
-  const bonusTasks = dashboard.tasks.slice(3);
+  const profile = await getCurrentProfile().catch(() => null);
+  const supabaseTasks =
+    profile?.role === "student" ? await getStudentTasksFromSupabase(profile.id) : [];
+  const tasks = supabaseTasks.length ? supabaseTasks : dashboard.tasks;
+  const requiredTasks = tasks.slice(0, 3);
+  const bonusTasks = tasks.slice(3);
 
   return (
     <DashboardShell title="Student English Quests" immersive>
@@ -34,7 +40,7 @@ export default function StudentTasksPage() {
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2">
                 <div className="rounded-2xl border border-white/15 bg-white/10 px-3 py-3 text-center">
-                  <p className="text-lg font-black text-[#FFCF17]">{dashboard.tasks.length}</p>
+                  <p className="text-lg font-black text-[#FFCF17]">{tasks.length}</p>
                   <p className="text-[0.62rem] font-black uppercase tracking-wide text-white/55">Quests</p>
                 </div>
                 <div className="rounded-2xl border border-white/15 bg-white/10 px-3 py-3 text-center">
@@ -65,6 +71,11 @@ export default function StudentTasksPage() {
                 </Link>
               ) : null}
             </div>
+            {!supabaseTasks.length ? (
+              <div className="mt-4 rounded-[1.4rem] border border-[#FFCF17]/40 bg-[#FFCF17]/12 p-3 text-xs font-black leading-5 text-[#FFEF82]">
+                Demo quests are showing. Real Supabase class tasks will appear here after a teacher publishes assigned tasks.
+              </div>
+            ) : null}
           </section>
 
           <section className="grid content-start gap-4">

@@ -3,7 +3,7 @@ import { ProgressChart } from "@/components/charts/ProgressChart";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { Card, ListRow, StatCard } from "@/components/ui";
 import { getCurrentProfile } from "@/lib/auth";
-import { getParentDashboard } from "@/lib/dashboard-data";
+import { getParentDashboard, getParentDashboardFromSupabase } from "@/lib/dashboard-data";
 import { addChildByCodeAction } from "./actions";
 
 type DashboardPageProps = {
@@ -11,9 +11,13 @@ type DashboardPageProps = {
 };
 
 export default async function ParentDashboard({ searchParams }: DashboardPageProps) {
-  const dashboard = getParentDashboard();
   const message = await searchParams;
   const currentProfile = await getCurrentProfile().catch(() => null);
+  const liveDashboard =
+    currentProfile?.role === "parent"
+      ? await getParentDashboardFromSupabase(currentProfile.id)
+      : null;
+  const dashboard = liveDashboard ?? getParentDashboard();
   const parentCode = currentProfile?.profile_code ?? dashboard.parent?.profileCode ?? "TANPA";
 
   return (
@@ -30,7 +34,7 @@ export default async function ParentDashboard({ searchParams }: DashboardPagePro
 
       <section className="mb-5 rounded-[2rem] border-4 border-[#102A54] bg-[#FFFEF8] p-5 shadow-[8px_8px_0_rgba(16,42,84,0.12)]">
         <p className="inline-flex rounded-full border-2 border-[#102A54] bg-[#FFB199] px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-[#102A54]">
-          Parent learning report
+          Parent learning report · {liveDashboard ? "Live Supabase" : "Mock fallback"}
         </p>
         <div className="mt-3 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
           <div>
