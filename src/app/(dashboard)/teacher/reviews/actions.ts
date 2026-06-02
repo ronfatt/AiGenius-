@@ -41,6 +41,10 @@ type ReviewQueryBuilder = {
     values: Record<string, unknown>,
   ) => { eq: (column: string, value: unknown) => Promise<{ error: SupabaseError | null }> };
   insert: (values: Record<string, unknown>) => Promise<{ error: SupabaseError | null }>;
+  upsert: (
+    values: Record<string, unknown>,
+    options?: Record<string, unknown>,
+  ) => Promise<{ error: SupabaseError | null }>;
 };
 
 type ReviewSupabaseClient = {
@@ -49,6 +53,18 @@ type ReviewSupabaseClient = {
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function getCurrentReportMonth() {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Kuala_Lumpur",
+  }).format(new Date());
+}
+
+function uniqueList(items: Array<string | null | undefined>, limit = 8) {
+  return [...new Set(items.map((item) => String(item ?? "").trim()).filter(Boolean))].slice(0, limit);
+}
 
 function parseInteger(value: FormDataEntryValue | null) {
   const parsed = Number(value ?? 0);
@@ -133,6 +149,77 @@ async function markWeakSkills(input: {
   );
 }
 
+async function upsertParentReportProgress(input: {
+  studentId: string;
+  studentName: string;
+  taskTitle: string;
+  skillDomain: string;
+  cefrLevel: string;
+  schoolGrade: string;
+  score: number;
+  weakSkills: string[];
+  teacherFeedback: string;
+  reviewedAt: string;
+}): Promise<SupabaseError | null> {
+  const supabase = getSupabaseServiceRoleClient() as unknown as ReviewSupabaseClient;
+  const month = getCurrentReportMonth();
+  const scoreBand =
+    input.score >= 85 ? "strong mastery" : input.score >= 60 ? "steady progress" : "foundation support";
+  const strengths =
+    input.score >= 85
+      ? [`${input.skillDomain} confidence`, `${input.cefrLevel} task readiness`]
+      : input.score >= 60
+        ? [`${input.skillDomain} participation`, "correction readiness"]
+        : ["learning effort"];
+  const weaknesses =
+    input.weakSkills.length > 0
+      ? input.weakSkills
+      : input.score < 60
+        ? [input.skillDomain]
+        : [];
+  const recommendations =
+    input.score >= 85
+      ? [`Give one ${input.cefrLevel} challenge task for ${input.skillDomain}.`]
+      : input.score >= 60
+        ? [`Review missed ${input.skillDomain} questions before the next standard quest.`]
+        : [`Use foundation examples for ${weaknesses[0] ?? input.skillDomain} before moving on.`];
+
+  const { data: existingReport } = await supabase
+    .from("parent_reports")
+    .select("summary,strengths,weaknesses,recommendations,teacher_comment")
+    .eq("student_id", input.studentId)
+    .eq("month", month)
+    .maybeSingle<{
+      summary: string;
+      strengths: string[] | null;
+      weaknesses: string[] | null;
+      recommendations: string[] | null;
+      teacher_comment: string | null;
+    }>();
+
+  const teacherComment = input.teacherFeedback || `${input.studentName} completed ${input.taskTitle} with ${input.score}%.`;
+  const summary = `${input.studentName} reviewed ${input.taskTitle} (${input.schoolGrade}, CEFR ${input.cefrLevel}) with ${input.score}% showing ${scoreBand}. Latest focus: ${weaknesses[0] ?? input.skillDomain}.`;
+
+  const { error } = await supabase.from("parent_reports").upsert(
+    {
+      student_id: input.studentId,
+      month,
+      summary,
+      strengths: uniqueList([...(existingReport?.strengths ?? []), ...strengths]),
+      weaknesses: uniqueList([...(existingReport?.weaknesses ?? []), ...weaknesses]),
+      recommendations: uniqueList([
+        ...(existingReport?.recommendations ?? []),
+        ...recommendations,
+      ]),
+      teacher_comment: teacherComment,
+      generated_at: input.reviewedAt,
+    },
+    { onConflict: "student_id,month" },
+  );
+
+  return error;
+}
+
 export async function approveTeacherReviewAction(
   _previousState: ApproveReviewResult,
   formData: FormData,
@@ -162,9 +249,16 @@ export async function approveTeacherReviewAction(
   const supabase = getSupabaseServiceRoleClient() as unknown as ReviewSupabaseClient;
   const { data: task, error: taskError } = await supabase
     .from("learning_tasks")
-    .select("id,teacher_id")
+    .select("id,teacher_id,title,school_grade,cefr_level,skill_domain")
     .eq("id", taskId)
-    .maybeSingle<{ id: string; teacher_id: string }>();
+    .maybeSingle<{
+      id: string;
+      teacher_id: string;
+      title: string;
+      school_grade: string | null;
+      cefr_level: string | null;
+      skill_domain: string | null;
+    }>();
 
   if (taskError || !task || task.teacher_id !== profile.id) {
     return { ok: false, message: "You can only review tasks assigned by you." };
@@ -172,9 +266,15 @@ export async function approveTeacherReviewAction(
 
   const { data: submission, error: submissionError } = await supabase
     .from("task_submissions")
-    .select("id,task_id,student_id,status")
+    .select("id,task_id,student_id,status,score")
     .eq("id", submissionId)
-    .maybeSingle<{ id: string; task_id: string; student_id: string; status: string }>();
+    .maybeSingle<{
+      id: string;
+      task_id: string;
+      student_id: string;
+      status: string;
+      score: number | null;
+    }>();
 
   if (
     submissionError ||
@@ -275,13 +375,49 @@ export async function approveTeacherReviewAction(
 
   await markWeakSkills({ studentId, weakSkills, reviewedAt });
 
+  const { data: studentForReport } = await supabase
+    .from("student_profiles")
+    .select("id,user_id,school_grade")
+    .eq("id", studentId)
+    .maybeSingle<{ id: string; user_id: string; school_grade: string }>();
+
+  const { data: studentProfileForReport } = studentForReport?.user_id
+    ? await supabase
+        .from("profiles")
+        .select("name")
+        .eq("id", studentForReport.user_id)
+        .maybeSingle<{ name: string }>()
+    : { data: null };
+
+  const reportError = await upsertParentReportProgress({
+    studentId,
+    studentName: studentProfileForReport?.name ?? "Student",
+    taskTitle: task.title,
+    skillDomain: task.skill_domain ?? "English",
+    cefrLevel: task.cefr_level ?? "A1",
+    schoolGrade: task.school_grade ?? studentForReport?.school_grade ?? "Year 4",
+    score: Math.round(Number(submission.score ?? 0)),
+    weakSkills,
+    teacherFeedback,
+    reviewedAt,
+  });
+
+  if (reportError) {
+    return {
+      ok: false,
+      message: `Review was saved, but parent report failed to update: ${reportError.message}`,
+    };
+  }
+
   revalidatePath("/teacher");
   revalidatePath("/teacher/reviews");
+  revalidatePath("/parent");
+  revalidatePath("/parent/report");
 
   return {
     ok: true,
     message: existingReward
-      ? "Review saved. Reward was already issued before, so XP and coins were not duplicated."
-      : "Review approved. Reward, weak skills, student totals, and pet XP were updated.",
+      ? "Review saved. Reward was already issued before, so XP and coins were not duplicated. Parent report was refreshed."
+      : "Review approved. Reward, weak skills, student totals, pet XP, and parent report were updated.",
   };
 }

@@ -280,7 +280,8 @@ export function TeacherReviewWorkbench({ items }: { items: TeacherReviewItem[] }
             <div className="mt-5 rounded-2xl bg-[#F8FBFF] p-4">
               <p className="text-xs font-black uppercase text-[#102A54]/55">Supabase next</p>
               <p className="mt-2 text-sm font-bold leading-6 text-[#102A54]/65">
-                This action will update `task_submissions`, insert a reward transaction, and update `subject_skills`.
+                This action will update submissions, issue rewards, grow the pet, mark weak skills,
+                and refresh the monthly parent report.
               </p>
             </div>
           </div>

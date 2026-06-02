@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:link": "supabase link --project-ref fhgedoghywxgrzokcqeh",
-    "db:push": "supabase db push"
+    "db:link": "npx supabase link --project-ref fhgedoghywxgrzokcqeh",
+    "db:push": "npx supabase db push",
+    "db:seed:demo": "node scripts/seed-demo-data.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",

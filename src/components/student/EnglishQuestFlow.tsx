@@ -340,7 +340,14 @@ export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }
               submitState.ok ? "bg-[#39D353]/20 text-[#BFFFD0]" : "bg-[#FFCF17]/18 text-[#FFEF82]"
             }`}
           >
-            {submitState.message}
+            <p>{submitState.message}</p>
+            {submitState.rewardPreview ? (
+              <div className="mt-3 grid gap-2 rounded-2xl bg-[#071E63]/55 p-3 text-white sm:grid-cols-3">
+                <span>Saved score: {submitState.rewardPreview.score}%</span>
+                <span>Pending: +{submitState.rewardPreview.xp} XP</span>
+                <span>Coins: +{submitState.rewardPreview.starCoins}</span>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
