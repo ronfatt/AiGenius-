@@ -1,11 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { demoAuthCookieName, isUserRole } from "@/lib/demo-auth";
+import { demoAuthCookieName, isDemoLoginEnabled, isUserRole } from "@/lib/demo-auth";
 import type { UserRole } from "@/lib/types";
 
 const roleRoutes: Array<{ prefix: string; roles: UserRole[] }> = [
   { prefix: "/admin", roles: ["admin"] },
   { prefix: "/teacher", roles: ["teacher", "admin"] },
+  { prefix: "/students", roles: ["teacher", "admin"] },
+  { prefix: "/classes", roles: ["teacher", "admin"] },
+  { prefix: "/tasks", roles: ["teacher", "admin"] },
   { prefix: "/student", roles: ["student", "admin"] },
   { prefix: "/parent", roles: ["parent", "admin"] },
 ];
@@ -25,7 +28,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const demoRole = request.cookies.get(demoAuthCookieName)?.value;
+  const demoRole = isDemoLoginEnabled()
+    ? request.cookies.get(demoAuthCookieName)?.value
+    : undefined;
   if (isUserRole(demoRole)) {
     if (matchedRoute.roles.includes(demoRole)) {
       return NextResponse.next();
@@ -97,5 +102,13 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/teacher/:path*", "/student/:path*", "/parent/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/teacher/:path*",
+    "/students/:path*",
+    "/classes/:path*",
+    "/tasks/:path*",
+    "/student/:path*",
+    "/parent/:path*",
+  ],
 };

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BrandMark } from "@/components/ui";
-import { demoAuthPassword } from "@/lib/demo-auth";
+import { demoAuthPassword, isDemoLoginEnabled } from "@/lib/demo-auth";
 import { adminLoginAction } from "./actions";
 
 export default async function AdminLoginPage({
@@ -10,6 +10,7 @@ export default async function AdminLoginPage({
 }) {
   const params = await searchParams;
   const error = params?.error;
+  const showDemoLogin = isDemoLoginEnabled();
 
   return (
     <main className="min-h-screen bg-[#FFF7E2] bg-[radial-gradient(circle_at_10%_10%,#4FB8FF44,transparent_26%),radial-gradient(circle_at_88%_12%,#FFD95A66,transparent_24%),linear-gradient(135deg,#FFF7E2_0%,#FFFDF3_48%,#EEF2F5_100%)] px-5 py-6 text-[#102A54]">
@@ -41,8 +42,7 @@ export default async function AdminLoginPage({
             </p>
             <h2 className="mt-2 text-3xl font-black">Admin Login</h2>
             <p className="mt-2 text-sm font-bold leading-6 text-[#102A54]/60">
-              Frontend mockup for now. Supabase Auth will later verify
-              the admin role before entering the admin dashboard.
+              Supabase Auth verifies the admin role before entering the admin dashboard.
             </p>
           </div>
 
@@ -80,14 +80,16 @@ export default async function AdminLoginPage({
             </button>
           </form>
 
-          <div className="mt-5 rounded-2xl border-2 border-[#102A54]/20 bg-[#EEF2F5] p-4">
-            <p className="text-xs font-black uppercase tracking-wide text-[#102A54]/60">
-              Demo admin login
-            </p>
-            <p className="mt-1 text-sm font-bold leading-6 text-[#102A54]/65">
-              admin@aigenius.test / {demoAuthPassword}
-            </p>
-          </div>
+          {showDemoLogin ? (
+            <div className="mt-5 rounded-2xl border-2 border-[#102A54]/20 bg-[#EEF2F5] p-4">
+              <p className="text-xs font-black uppercase tracking-wide text-[#102A54]/60">
+                Dev demo admin login
+              </p>
+              <p className="mt-1 text-sm font-bold leading-6 text-[#102A54]/65">
+                admin@aigenius.test / {demoAuthPassword}
+              </p>
+            </div>
+          ) : null}
         </section>
       </div>
     </main>

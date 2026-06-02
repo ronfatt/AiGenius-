@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { demoAccounts } from "@/lib/demo-auth";
+import { demoAccounts, isDemoLoginEnabled } from "@/lib/demo-auth";
 import { loginAction } from "./actions";
 
 const roles = [
@@ -31,6 +31,7 @@ export default async function LoginPage({
 }) {
   const params = await searchParams;
   const error = params?.error;
+  const showDemoLogin = isDemoLoginEnabled();
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#071E63] bg-[radial-gradient(circle_at_18%_8%,rgba(79,184,255,0.55),transparent_28%),radial-gradient(circle_at_82%_16%,rgba(139,56,255,0.45),transparent_24%),linear-gradient(180deg,#061956_0%,#0B2F86_48%,#142C7D_100%)] px-4 py-5 text-white sm:px-6 lg:p-8">
@@ -146,20 +147,22 @@ export default async function LoginPage({
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/15 bg-white/10 p-5 shadow-[0_18px_52px_rgba(0,0,0,0.18)] backdrop-blur">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FFCF17]">
-              Demo login
-            </p>
-            <div className="mt-3 grid gap-2 text-sm font-bold leading-6 text-white/68">
-              {demoAccounts
-                .filter((account) => account.role !== "admin")
-                .map((account) => (
-                  <p key={account.email}>
-                    {account.role}: {account.email} / {account.password}
-                  </p>
-                ))}
+          {showDemoLogin ? (
+            <div className="rounded-[2rem] border border-white/15 bg-white/10 p-5 shadow-[0_18px_52px_rgba(0,0,0,0.18)] backdrop-blur">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FFCF17]">
+                Dev demo login
+              </p>
+              <div className="mt-3 grid gap-2 text-sm font-bold leading-6 text-white/68">
+                {demoAccounts
+                  .filter((account) => account.role !== "admin")
+                  .map((account) => (
+                    <p key={account.email}>
+                      {account.role}: {account.email} / {account.password}
+                    </p>
+                  ))}
+              </div>
             </div>
-          </div>
+          ) : null}
         </section>
       </div>
     </main>

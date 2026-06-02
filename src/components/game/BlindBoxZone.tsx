@@ -2,14 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useActionState, useState } from "react";
+import { drawBlindBoxAction } from "@/app/(dashboard)/student/cards/actions";
 import {
-  drawBlindBox,
   getLimitedPetCollection,
   getRandomBlindBoxShelf,
   type BlindBox,
 } from "@/lib/blind-boxes";
-import type { PetCard } from "@/lib/types";
 
 const initialShelfSeed = 5312026;
 
@@ -30,13 +29,16 @@ function boxAccent(box: BlindBox) {
   return "from-[#FFCF17] via-[#FF9F1C] to-[#4FB8FF]";
 }
 
-export function BlindBoxZone({ cards, coins }: { cards: PetCard[]; coins: number }) {
+export function BlindBoxZone({ coins }: { coins: number }) {
+  const [drawState, drawAction, isDrawing] = useActionState(drawBlindBoxAction, {
+    ok: false,
+    message: "",
+  });
   const [shelfSeed, setShelfSeed] = useState(initialShelfSeed);
   const [availableBoxes, setAvailableBoxes] = useState<BlindBox[]>(() =>
     getRandomBlindBoxShelf(initialShelfSeed),
   );
   const [selectedBox, setSelectedBox] = useState<BlindBox>(availableBoxes[0]);
-  const [result, setResult] = useState<ReturnType<typeof drawBlindBox> | null>(null);
   const limitedPreview = getLimitedPetCollection().slice(0, 9);
   const tickets = {
     normal: 2,
@@ -44,23 +46,12 @@ export function BlindBoxZone({ cards, coins }: { cards: PetCard[]; coins: number
     rare: 0,
   };
 
-  function openBox(box: BlindBox) {
-    if (box.tier === "rare" && tickets.rare <= 0) {
-      setResult(null);
-      return;
-    }
-
-    setSelectedBox(box);
-    setResult(drawBlindBox(box.id, cards));
-  }
-
   function refreshShelf() {
     const nextSeed = Date.now() + shelfSeed;
     const nextShelf = getRandomBlindBoxShelf(nextSeed);
     setShelfSeed(nextSeed);
     setAvailableBoxes(nextShelf);
     setSelectedBox(nextShelf[0]);
-    setResult(null);
   }
 
   return (
@@ -145,16 +136,25 @@ export function BlindBoxZone({ cards, coins }: { cards: PetCard[]; coins: number
             </div>
             <ProgressRail value={selectedBox.tier === "rare" ? 8 : selectedBox.tier === "star" ? 48 : 78} />
           </div>
-          <button
-            type="button"
-            onClick={() => openBox(selectedBox)}
-            disabled={selectedBox.tier === "rare" && tickets.rare <= 0}
-            className="mt-5 w-full rounded-2xl bg-gradient-to-r from-[#8B38FF] to-[#4FB8FF] px-5 py-4 text-sm font-black text-white shadow-[0_14px_30px_rgba(79,184,255,0.25)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:from-white/20 disabled:to-white/10 disabled:text-white/55"
-          >
-            {selectedBox.tier === "rare" && tickets.rare <= 0
-              ? "Need Rare Chance Ticket"
-              : `Open for ${selectedBox.costCoins} coins`}
-          </button>
+          <form action={drawAction}>
+            <input type="hidden" name="boxId" value={selectedBox.id} />
+            <button
+              type="submit"
+              disabled={(selectedBox.tier === "rare" && tickets.rare <= 0) || isDrawing}
+              className="mt-5 w-full rounded-2xl bg-gradient-to-r from-[#8B38FF] to-[#4FB8FF] px-5 py-4 text-sm font-black text-white shadow-[0_14px_30px_rgba(79,184,255,0.25)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:from-white/20 disabled:to-white/10 disabled:text-white/55"
+            >
+              {selectedBox.tier === "rare" && tickets.rare <= 0
+                ? "Need Rare Chance Ticket"
+                : isDrawing
+                  ? "Opening..."
+                  : `Open for ${selectedBox.costCoins} coins`}
+            </button>
+          </form>
+          {drawState.message ? (
+            <p className={`mt-3 rounded-2xl px-4 py-3 text-sm font-black ${drawState.ok ? "bg-[#39D353]/20 text-[#BFFFD0]" : "bg-[#FFCF17]/18 text-[#FFEF82]"}`}>
+              {drawState.message}
+            </p>
+          ) : null}
         </div>
       </section>
 
@@ -210,43 +210,43 @@ export function BlindBoxZone({ cards, coins }: { cards: PetCard[]; coins: number
           ))}
         </div>
 
-        {result ? (
+        {drawState.reward ? (
           <div className="rounded-[2rem] border border-white/15 bg-white/10 p-4 shadow-[0_18px_52px_rgba(0,0,0,0.18)] backdrop-blur">
             <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FFCF17]">
-              Reward result
+              Saved reward result
             </p>
-            {result.rewardType === "limited_pet" ? (
+            {drawState.reward.rewardType === "limited_pet" ? (
               <div className="mt-4 grid gap-4 sm:grid-cols-[120px_1fr] sm:items-center">
                 <div className="relative h-28 w-28 overflow-hidden rounded-[1.5rem] bg-white/15">
                   <Image
-                    src={result.imageUrl}
-                    alt={result.name}
+                    src={drawState.reward.imageUrl ?? selectedBox.imageUrl}
+                    alt={drawState.reward.name}
                     width={180}
                     height={180}
                     className="h-full w-full object-cover"
                   />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black">{result.name}</h3>
+                  <h3 className="text-2xl font-black">{drawState.reward.name}</h3>
                   <p className="mt-1 text-sm font-black uppercase text-white/55">
-                    Limited #{result.collectionNo}/81
+                    Limited collection
                   </p>
                   <p className="mt-2 text-sm font-bold leading-6 text-white/68">
-                    {result.description}
+                    {drawState.reward.description}
                   </p>
                 </div>
               </div>
             ) : (
               <div>
-                <h3 className="mt-2 text-2xl font-black">{result.name}</h3>
+                <h3 className="mt-2 text-2xl font-black">{drawState.reward.name}</h3>
                 <p className="mt-1 text-sm font-black uppercase text-white/55">
-                  {result.rarity} · {result.rewardType}
+                  {drawState.reward.rewardType}
                 </p>
                 <p className="mt-2 text-sm font-bold leading-6 text-white/68">
-                  {result.description}
+                  {drawState.reward.description}
                 </p>
                 <p className="mt-3 inline-flex rounded-full bg-[#39D353] px-4 py-2 text-sm font-black text-[#05245F]">
-                  +{result.xpAmount} XP · +{result.coinAmount} coins
+                  +{drawState.reward.xpAmount} XP · +{drawState.reward.coinAmount} coins
                 </p>
               </div>
             )}

@@ -5,9 +5,13 @@ import { getCurrentProfile } from "@/lib/auth";
 import { getCefrTargetForGrade } from "@/lib/cefr-level";
 import { getParentDashboard, getParentDashboardFromSupabase } from "@/lib/dashboard-data";
 import { detectLearningGap } from "@/lib/learning-level";
+import { generateMonthlyParentReportForParent } from "@/lib/parent-report-generator";
 
 export default async function ParentReportPage() {
   const currentProfile = await getCurrentProfile().catch(() => null);
+  if (currentProfile?.role === "parent") {
+    await generateMonthlyParentReportForParent(currentProfile.id);
+  }
   const liveDashboard =
     currentProfile?.role === "parent"
       ? await getParentDashboardFromSupabase(currentProfile.id)

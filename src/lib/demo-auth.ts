@@ -38,6 +38,8 @@ export const demoAccounts: DemoAccount[] = [
 ];
 
 export function findDemoAccount(email: string, password: string) {
+  if (!isDemoLoginEnabled()) return undefined;
+
   return demoAccounts.find(
     (account) =>
       account.email.toLowerCase() === email.toLowerCase() &&
@@ -47,4 +49,8 @@ export function findDemoAccount(email: string, password: string) {
 
 export function isUserRole(value: string | undefined): value is UserRole {
   return value === "admin" || value === "teacher" || value === "student" || value === "parent";
+}
+
+export function isDemoLoginEnabled() {
+  return process.env.NEXT_PUBLIC_ENABLE_DEMO_LOGIN === "true" || process.env.NODE_ENV !== "production";
 }
