@@ -86,6 +86,9 @@ export default async function StudentDashboard() {
   const xpProgress = dashboard.pet.xp % 1000;
   const studentName = currentStudentCode?.studentName ?? dashboard.studentName;
   const referralCode = currentStudentCode?.referralCode ?? dashboard.student.referralCode;
+  const weakestSkills = [...dashboard.skills]
+    .sort((a, b) => a.masteryPercentage - b.masteryPercentage)
+    .slice(0, 3);
 
   return (
     <DashboardShell title="Student Dashboard" immersive>
@@ -206,7 +209,10 @@ export default async function StudentDashboard() {
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FFCF17]">
                     Daily mission
                   </p>
-                  <h2 className="mt-1 text-2xl font-black">Complete 3 learning blocks</h2>
+                  <h2 className="mt-1 text-2xl font-black">Start small: 5 minutes</h2>
+                  <p className="mt-2 text-sm font-bold leading-6 text-white/62">
+                    Do one easy question, fix one mistake, and learn one useful word.
+                  </p>
                 </div>
                 <span className="rounded-2xl bg-[#39D353] px-4 py-2 text-sm font-black text-[#05245F]">
                   {requiredDone}/3
@@ -219,7 +225,7 @@ export default async function StudentDashboard() {
                 href="/student/tasks"
                 className="mt-4 grid min-h-14 place-items-center rounded-2xl bg-gradient-to-r from-[#8B38FF] to-[#4FB8FF] text-sm font-black text-white shadow-[0_14px_30px_rgba(79,184,255,0.25)] transition hover:-translate-y-0.5"
               >
-                Continue English Quest
+                Start easy English quest
               </Link>
             </div>
 
@@ -249,6 +255,13 @@ export default async function StudentDashboard() {
                     </div>
                     <h3 className="mt-4 text-lg font-black">{tile.skillDomain}</h3>
                     <p className="mt-1 line-clamp-2 text-sm font-bold leading-5 text-white/72">
+                      {index === 0
+                        ? "One short reading clue"
+                        : index === 1
+                          ? "Fix one grammar mistake"
+                          : "Learn one useful word"}
+                    </p>
+                    <p className="mt-2 text-xs font-bold leading-5 text-white/55">
                       {tile.title}
                     </p>
                     <div className="mt-4 flex gap-2 text-[0.68rem] font-black">
@@ -262,6 +275,53 @@ export default async function StudentDashboard() {
                   </Link>
                 );
               })}
+            </div>
+
+            <div className="rounded-[2rem] border border-white/15 bg-white/10 p-4 shadow-[0_18px_52px_rgba(0,0,0,0.18)] backdrop-blur">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FFCF17]">
+                Skill islands
+              </p>
+              <h2 className="mt-1 text-2xl font-black">Light up your weak areas</h2>
+              <p className="mt-2 text-sm font-bold leading-6 text-white/62">
+                Dark islands are not bad. They show where your next easy quest can help.
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {(weakestSkills.length ? weakestSkills : dashboard.skills.slice(0, 3)).map((skill, index) => {
+                  const low = skill.masteryPercentage < 60;
+                  const tones = [
+                    "from-[#4FB8FF] to-[#0D47A1]",
+                    "from-[#8B38FF] to-[#4D20AA]",
+                    "from-[#FFB000] to-[#FF6B57]",
+                  ];
+
+                  return (
+                    <Link
+                      key={skill.id}
+                      href="/student/tasks"
+                      className={`rounded-[1.5rem] border border-white/15 bg-gradient-to-br ${tones[index]} p-4 transition hover:-translate-y-0.5 ${low ? "opacity-85" : ""}`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="grid h-11 w-11 place-items-center rounded-2xl bg-white/15 text-lg font-black">
+                          {skill.skillName.slice(0, 1)}
+                        </span>
+                        <span className={`rounded-full px-3 py-1 text-[0.68rem] font-black ${low ? "bg-[#FFCF17] text-[#102A54]" : "bg-[#39D353] text-[#05245F]"}`}>
+                          {low ? "Needs light" : "Lit"}
+                        </span>
+                      </div>
+                      <h3 className="mt-4 text-lg font-black">{skill.skillName}</h3>
+                      <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#071E63]/50">
+                        <div
+                          className="h-full rounded-full bg-[#FFCF17]"
+                          style={{ width: `${Math.max(8, skill.masteryPercentage)}%` }}
+                        />
+                      </div>
+                      <p className="mt-2 text-xs font-bold text-white/65">
+                        {skill.masteryPercentage}% mastery
+                      </p>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="grid gap-4 lg:grid-cols-[1fr_0.9fr]">

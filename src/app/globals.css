@@ -63,3 +63,46 @@ body::selection {
   animation: progress-fill 700ms ease-out both;
   transform-origin: left;
 }
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #102a54 !important;
+  }
+
+  .print-hidden,
+  nav,
+  aside,
+  [aria-label="Notifications"] {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  main,
+  section,
+  div {
+    box-shadow: none !important;
+  }
+
+  section {
+    break-inside: avoid;
+  }
+
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}

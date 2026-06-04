@@ -66,6 +66,8 @@ function getQuestionSkillLabel(questionType: string) {
 
 export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [helpOpen, setHelpOpen] = useState<Record<string, boolean>>({});
+  const [chineseOpen, setChineseOpen] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
   const [submitState, submitAction, isSubmitting] = useActionState(submitStudentTaskAction, {
     ok: false,
@@ -119,6 +121,62 @@ export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }
     createdAt: new Date().toISOString(),
   });
   const evolution = getEvolutionProgress(previewPet);
+  const difficultyLabel =
+    task.taskBand === "Foundation"
+      ? "Easy start"
+      : task.taskBand === "Challenge"
+        ? "Challenge"
+        : "Normal";
+  const petCoachMessage = submitted
+    ? score >= 85
+      ? `${pet.name} says: Strong clue-finding. Ready for a harder quest.`
+      : score >= 60
+        ? `${pet.name} says: Good try. Fix one mistake and you will grow again.`
+        : `${pet.name} says: It is okay. We can rebuild this skill one small step at a time.`
+    : `${pet.name} says: Try 3 questions. Use Hint if you feel stuck.`;
+
+  function toggleHelp(questionId: string) {
+    setHelpOpen((current) => ({ ...current, [questionId]: !current[questionId] }));
+  }
+
+  function toggleChinese(questionId: string) {
+    setChineseOpen((current) => ({ ...current, [questionId]: !current[questionId] }));
+  }
+
+  function markNeedHelp(questionId: string) {
+    setHelpOpen((current) => ({ ...current, [questionId]: true }));
+  }
+
+  function markDontKnow(questionId: string) {
+    setAnswers((current) => ({ ...current, [questionId]: "I need help" }));
+    setHelpOpen((current) => ({ ...current, [questionId]: true }));
+  }
+
+  function getMiniHint(questionType: string) {
+    const hints: Record<string, string> = {
+      reading: "Find the sentence that tells the most important idea.",
+      grammar: "Check the subject first, then choose the verb that matches it.",
+      vocabulary: "Replace the word in the sentence and see which meaning still fits.",
+      writing: "Build one clear sentence: who, action, detail.",
+      speaking: "Say a short answer first. Clear is better than long.",
+      listening: "Listen for the key word, not every single word.",
+    };
+
+    return hints[questionType] ?? "Look for the clue word before choosing.";
+  }
+
+  function getChineseSupport(questionType: string) {
+    const supports: Record<string, string> = {
+      reading: "中文提示：先找文章最重要的意思，不要只选一个小细节。",
+      grammar: "中文提示：先看主语是谁，再选正确的动词形式。",
+      vocabulary: "中文提示：把答案放回句子里试试看，意思通顺的通常就是答案。",
+      writing: "中文提示：先写简单句，人物 + 动作 + 一个细节。",
+      speaking: "中文提示：先用短句回答，不需要一开始就讲很长。",
+      listening: "中文提示：听关键词，不需要每个字都听懂。",
+    };
+
+    return supports[questionType] ?? "中文提示：先找线索，再慢慢选择。";
+  }
 
   return (
     <div className="mx-auto grid max-w-6xl gap-5 xl:grid-cols-[430px_1fr]">
@@ -140,6 +198,17 @@ export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }
             Quest progress
           </p>
           <h2 className="mt-1 text-2xl font-black">{answeredCount}/{questions.length} answered</h2>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <span className="rounded-2xl bg-[#FFCF17] px-3 py-2 text-center text-xs font-black text-[#102A54]">
+              {difficultyLabel}
+            </span>
+            <span className="rounded-2xl bg-white/12 px-3 py-2 text-center text-xs font-black text-white">
+              5 min quest
+            </span>
+            <span className="rounded-2xl bg-[#39D353] px-3 py-2 text-center text-xs font-black text-[#05245F]">
+              Help allowed
+            </span>
+          </div>
           <div className="mt-4">
             <ProgressRail value={(answeredCount / questions.length) * 100} />
           </div>
@@ -154,6 +223,17 @@ export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }
 
         <div className="mt-4 rounded-[2rem] border border-white/15 bg-[#09256B]/75 p-4 shadow-[0_20px_48px_rgba(0,0,0,0.28)]">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#FFCF17]">
+            Pet coach
+          </p>
+          <div className="mt-3 rounded-[1.5rem] bg-white/10 p-4">
+            <p className="text-sm font-black leading-6 text-white">
+              {petCoachMessage}
+            </p>
+            <p className="mt-2 text-xs font-bold leading-5 text-white/60">
+              If you do not know, press Hint or I need help. That still counts as learning.
+            </p>
+          </div>
+          <p className="mt-5 text-xs font-black uppercase tracking-[0.18em] text-[#FFCF17]">
             Reward preview
           </p>
           {submitted ? (
@@ -203,6 +283,17 @@ export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }
             English quest
           </p>
           <h2 className="mt-1 text-2xl font-black">{task.description}</h2>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <div className="rounded-2xl bg-[#39D353]/18 p-3 text-sm font-black text-[#BFFFD0]">
+              Goal: finish, not perfect
+            </div>
+            <div className="rounded-2xl bg-[#FFCF17]/18 p-3 text-sm font-black text-[#FFEF82]">
+              Use hints when stuck
+            </div>
+            <div className="rounded-2xl bg-white/10 p-3 text-sm font-black text-white">
+              Mistakes unlock practice
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-4">
@@ -216,9 +307,49 @@ export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }
                   <h3 className="mt-2 text-xl font-black">{question.prompt}</h3>
                 </div>
                 <span className="rounded-full bg-white/12 px-3 py-1 text-xs font-black">
-                  {answers[question.id] ? "Done" : "Open"}
+                  {answers[question.id] ? (answers[question.id] === "I need help" ? "Help" : "Done") : "Open"}
                 </span>
               </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => toggleHelp(question.id)}
+                  className="rounded-full bg-[#FFCF17] px-4 py-2 text-xs font-black text-[#102A54]"
+                >
+                  Hint
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleChinese(question.id)}
+                  className="rounded-full bg-white/12 px-4 py-2 text-xs font-black text-white"
+                >
+                  Chinese help
+                </button>
+                <button
+                  type="button"
+                  onClick={() => markNeedHelp(question.id)}
+                  className="rounded-full bg-[#39D353] px-4 py-2 text-xs font-black text-[#05245F]"
+                >
+                  I need help
+                </button>
+                <button
+                  type="button"
+                  onClick={() => markDontKnow(question.id)}
+                  className="rounded-full bg-[#FF6B57] px-4 py-2 text-xs font-black text-white"
+                >
+                  I don&apos;t know
+                </button>
+              </div>
+              {helpOpen[question.id] ? (
+                <div className="mt-3 rounded-2xl bg-[#FFCF17]/18 p-3 text-sm font-bold leading-6 text-[#FFEF82]">
+                  Hint: {getMiniHint(question.type)}
+                </div>
+              ) : null}
+              {chineseOpen[question.id] ? (
+                <div className="mt-3 rounded-2xl bg-white/10 p-3 text-sm font-bold leading-6 text-white/78">
+                  {getChineseSupport(question.type)}
+                </div>
+              ) : null}
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 {(question.options ?? []).map((option) => {
                   const selected = answers[question.id] === option;
@@ -245,6 +376,11 @@ export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }
                   );
                 })}
               </div>
+              {answers[question.id] === "I need help" && !submitted ? (
+                <p className="mt-3 rounded-2xl bg-[#FF6B57]/15 p-3 text-sm font-bold leading-6 text-[#FFD7D1]">
+                  Saved as &quot;I need help&quot;. You can still choose an answer after reading the hint.
+                </p>
+              ) : null}
               {submitted ? (
                 <div
                   className={`mt-3 rounded-2xl p-3 text-sm font-bold leading-6 ${
@@ -260,9 +396,18 @@ export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }
                   </p>
                   <p className="mt-1 text-white/75">{question.explanation}</p>
                   {answers[question.id] !== question.answer ? (
-                    <p className="mt-2 text-white/75">
-                      Fix-it action: read the question again, find the clue, then say why the correct answer fits.
-                    </p>
+                    <div className="mt-2 grid gap-2 text-white/75">
+                      <p>
+                        Fix-it action: read the question again, find the clue, then say why the correct answer fits.
+                      </p>
+                      <p>{getChineseSupport(question.type)}</p>
+                      <Link
+                        href="/student/tasks"
+                        className="inline-flex w-fit rounded-full bg-[#FFCF17] px-4 py-2 text-xs font-black text-[#102A54]"
+                      >
+                        Practice similar question
+                      </Link>
+                    </div>
                   ) : null}
                 </div>
               ) : null}
@@ -279,6 +424,9 @@ export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }
               <h3 className="mt-2 text-2xl font-black">{feedback.title}</h3>
               <p className="mt-2 text-sm font-bold leading-6 text-white/68">
                 {feedback.message}
+              </p>
+              <p className="mt-2 rounded-2xl bg-white/10 p-3 text-sm font-bold leading-6 text-white/72">
+                Chinese support: 做错不是失败。先改一个错题，再做下一题，英文就会慢慢升级。
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {learnedSkills.map((skill) => (
@@ -313,6 +461,9 @@ export function EnglishQuestFlow({ task, pet }: { task: LearningTask; pet: Pet }
               Mistake review
             </p>
             <h3 className="mt-2 text-2xl font-black">Fix these before the next quest</h3>
+            <p className="mt-2 text-sm font-bold leading-6 text-white/65">
+              Pick one mistake first. Small correction is better than guessing many questions.
+            </p>
             <div className="mt-4 grid gap-3">
               {incorrectQuestions.map((question, index) => (
                 <div key={question.id} className="rounded-2xl bg-[#071E63]/70 p-4">
